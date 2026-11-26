@@ -1,0 +1,56 @@
+name: Shifa iOS simulator build
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Shifa-MVP-Project(2).zip'
+      - '.github/workflows/ios-build.yml'
+  workflow_dispatch:
+jobs:
+  ios-simulator:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract app source archive
+        run: |
+          mkdir -p /tmp/shifa-src
+          unzip -q 'Shifa-MVP-Project(2).zip' -d /tmp/shifa-src
+          test -f /tmp/shifa-src/Shifa/package.json
+          cp -a /tmp/shifa-src/Shifa/. .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Run tests
+        run: npm test
+      - name: Build web app
+        run: npm run build
+      - name: Configure Capacitor for CI
+        run: |
+          rm -f capacitor.config.ts capacitor.config.js capacitor.config.mjs
+          cat > capacitor.config.json <<'EOF'
+          {
+            "appId": "com.shifa.mallawi",
+            "appName": "Shifa",
+            "webDir": "dist",
+            "bundledWebRuntime": false
+          }
+          EOF
+      - name: Add and sync iOS platform
+        run: |
+          npx cap add ios
+          npx cap sync ios
+      - name: Build iOS Simulator app
+        run: |
+          xcodebuild -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shifa-ios-simulator-app
+          path: build/Build/Products/Debug-iphonesimulator/App.app
+          if-no-files-found: error
