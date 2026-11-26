@@ -24,6 +24,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Run tests
         run: npm test
+      - name: Install React TypeScript declarations
+        run: npm install --no-audit --no-fund --save-dev @types/react @types/react-dom
       - name: Build web app
         run: npm run build
       - name: Configure Capacitor for CI
