@@ -1,4 +1,4 @@
-name: Shifa Android build
+name: Saree3 Android build
 on:
   workflow_dispatch:
   push:
@@ -43,7 +43,7 @@ jobs:
           cat > capacitor.config.json <<'EOF'
           {
             "appId": "com.shifa.mallawi",
-            "appName": "جَيّلك",
+            "appName": "سريع",
             "webDir": "dist",
             "bundledWebRuntime": false
           }
