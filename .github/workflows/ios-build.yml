@@ -1,4 +1,4 @@
-name: Shifa iOS simulator build
+name: Saree3 iOS simulator build
 on:
   push:
     branches: [main]
@@ -43,7 +43,7 @@ jobs:
           cat > capacitor.config.json <<'EOF'
           {
             "appId": "com.shifa.mallawi",
-            "appName": "جَيّلك",
+            "appName": "سريع",
             "webDir": "dist",
             "bundledWebRuntime": false
           }
