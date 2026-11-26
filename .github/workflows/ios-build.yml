@@ -17,6 +17,13 @@ jobs:
           unzip -q 'Shifa-MVP-Project(2).zip' -d /tmp/shifa-src
           test -f /tmp/shifa-src/Shifa/package.json
           cp -a /tmp/shifa-src/Shifa/. .
+      - name: Configure Supabase client for app build
+        run: |
+          cat > .env.production <<'EOF'
+          VITE_SUPABASE_URL=https://qfweejmqooojsedsypen.supabase.co
+          VITE_SUPABASE_ANON_KEY=sb_publishable_a8Ys0LNdf7UcT6c6lH1KOg_gkXb0X_i
+          VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_a8Ys0LNdf7UcT6c6lH1KOg_gkXb0X_i
+          EOF
       - uses: actions/setup-node@v4
         with:
           node-version: 22
