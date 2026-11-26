@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'Shifa-MVP-Project(2).zip'
+      - 'app-overlay/**'
       - '.github/workflows/ios-build.yml'
   workflow_dispatch:
 jobs:
@@ -17,6 +18,19 @@ jobs:
           unzip -q 'Shifa-MVP-Project(2).zip' -d /tmp/shifa-src
           test -f /tmp/shifa-src/Shifa/package.json
           cp -a /tmp/shifa-src/Shifa/. .
+      - name: Overlay live Supabase connection panel
+        run: |
+          mkdir -p src
+          cp -a app-overlay/src/. src/
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("index.html")
+          html = p.read_text()
+          tag = '<script type="module" src="/src/shifa-supabase-panel.tsx"></script>'
+          if tag not in html:
+              html = html.replace("</body>", f"  {tag}\\n</body>")
+          p.write_text(html)
+          PY
       - name: Configure Supabase client for app build
         run: |
           cat > .env.production <<'EOF'
@@ -52,11 +66,11 @@ jobs:
           npx cap sync ios
       - name: Build iOS Simulator app
         run: |
-          xcodebuild -workspace ios/App/App.xcworkspace \
-            -scheme App \
-            -sdk iphonesimulator \
-            -configuration Debug \
-            -derivedDataPath build \
+          xcodebuild -workspace ios/App/App.xcworkspace \\
+            -scheme App \\
+            -sdk iphonesimulator \\
+            -configuration Debug \\
+            -derivedDataPath build \\
             CODE_SIGNING_ALLOWED=NO build
       - uses: actions/upload-artifact@v4
         with:
