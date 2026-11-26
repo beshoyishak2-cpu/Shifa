@@ -28,7 +28,7 @@ jobs:
           html = p.read_text()
           tag = '<script type="module" src="/src/shifa-supabase-panel.tsx"></script>'
           if tag not in html:
-              html = html.replace("</body>", f"  {tag}\\n</body>")
+              html = html.replace("</body>", f"  {tag}\n</body>")
           p.write_text(html)
           PY
       - name: Configure Supabase client for app build
