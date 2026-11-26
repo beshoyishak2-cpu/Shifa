@@ -1,0 +1,27 @@
+name: Shifa Supabase connectivity check
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/supabase-smoke-test.yml'
+  workflow_dispatch:
+jobs:
+  api-health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Supabase REST endpoint
+        env:
+          SUPABASE_URL: https://qfweejmqooojsedsypen.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_a8Ys0LNdf7UcT6c6lH1KOg_gkXb0X_i
+        run: |
+          set -euo pipefail
+          code=$(curl --silent --show-error --output /tmp/supabase-response.txt --write-out '%{http_code}' \
+            "$SUPABASE_URL/rest/v1/" \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_PUBLISHABLE_KEY")
+          echo "Supabase REST HTTP status: $code"
+          if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
+            cat /tmp/supabase-response.txt
+            exit 1
+          fi
+          echo "Supabase REST endpoint is reachable."
