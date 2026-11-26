@@ -1,0 +1,39 @@
+name: Shifa Android build
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'Shifa-MVP-Project(2).zip'
+      - '.github/workflows/mobile-build.yml'
+jobs:
+  android-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract app source archive
+        run: |
+          mkdir -p /tmp/shifa-src
+          unzip -q 'Shifa-MVP-Project(2).zip' -d /tmp/shifa-src
+          test -f /tmp/shifa-src/Shifa/package.json
+          cp -a /tmp/shifa-src/Shifa/. .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - run: npx cap add android
+      - run: npm run build
+      - run: npx cap sync android
+      - name: Build debug APK
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shifa-android-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
