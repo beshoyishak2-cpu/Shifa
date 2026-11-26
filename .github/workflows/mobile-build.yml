@@ -20,15 +20,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
       - run: npm install --no-audit --no-fund
       - run: npm test
-      - run: npx cap add android
       - run: npm run build
+      - run: npx cap add android
       - run: npx cap sync android
       - name: Build debug APK
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug
