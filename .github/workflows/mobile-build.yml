@@ -18,6 +18,7 @@ jobs:
           unzip -q 'Shifa-MVP-Project(2).zip' -d /tmp/shifa-src
           test -f /tmp/shifa-src/Shifa/package.json
           cp -a /tmp/shifa-src/Shifa/. .
+          python3 app-overlay/patch-ui.py
       - name: Overlay live Supabase connection panel
         run: |
           mkdir -p src
