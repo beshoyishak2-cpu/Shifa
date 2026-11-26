@@ -26,6 +26,7 @@ jobs:
           java-version: '21'
       - run: npm install --no-audit --no-fund
       - run: npm test
+      - run: npm install --no-audit --no-fund --save-dev @types/react @types/react-dom
       - run: npm run build
       - run: npx cap add android
       - run: npx cap sync android
