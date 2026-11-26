@@ -1,63 +1,75 @@
-# شفاء | Shifa — Android + iOS starter
+# شفاء | Shifa — Local Super App MVP for Malawy, Minya
 
-مشروع موحد بـ React + Vite + Capacitor ليعمل كتطبيق Android وiPhone، مع واجهة RTL مبدئية لمنظومة الصيدليات والتوصيل في ملوي، المنيا.
+A single Arabic RTL application for customers, merchants/pharmacies, delivery drivers and administrators. Built with React + TypeScript + Vite + Capacitor 7, with an optional Supabase backend.
 
-## الحالة الحالية بوضوح
-- واجهات العميل والصيدلية والمندوب والإدارة موجودة كـ **نموذج تفاعلي تجريبي**.
-- تمت إضافة إعداد Capacitor ومنصتي Android وiOS، وملفات تكامل الكاميرا والموقع والمشاركة، وعميل Supabase اختياري.
-- تمت إضافة مخطط SQL أولي للجداول وسياسات وصول أساسية.
-- **لا يوجد خادم متصل افتراضيًا**: المنتجات والطلبات والأرقام المعروضة تجريبية. لا توجد مدفوعات أو توصيل حي أو OCR/ذكاء اصطناعي فعلي أو إشعارات خادمية جاهزة للإنتاج.
-- يجب استكمال سياسات RLS واختبارات الأمان وتدفقات مراجعة الصيدلي قبل إدخال بيانات صحية حقيقية.
+## Included in this starter
+- Customer storefront with restaurants, cafes, grocery, vegetables/fruit and pharmacies.
+- Single-merchant cart, quantities, order summary and cash-on-delivery checkout.
+- Flexible Malawy address fields (area/village, street, landmark) and optional device GPS.
+- Special courier / `ابعتلي` request form.
+- Prescription image/PDF attachment and camera capture UI. Prescription files are not transmitted until a private backend upload flow is configured; a licensed pharmacist must review every prescription.
+- Doctors directory UI. All names and phone numbers in the sample dataset are clearly marked as demo data and must be replaced with verified clinic data.
+- Merchant inventory/product management and order status workflow demo.
+- Driver availability, delivery task and earnings demo.
+- Admin dashboard, partner activation controls, order overview and operational settings demo.
+- Local browser persistence for the demo. The demo is not a production multi-user backend.
+- Capacitor Android/iOS project configuration and a GitHub Actions build workflow.
+- Supabase schema with role-safe profile trigger, RLS baseline and atomic server-side order creation RPC.
 
-## المتطلبات
-- Node.js 20 أو أحدث وnpm.
-- Android: Android Studio + Android SDK.
-- iOS: جهاز Mac + Xcode. لا يمكن إنشاء أو توقيع IPA من Windows أو Linux.
+## Run locally
+Requirements: Node.js 20+, npm.
 
-## تشغيل الويب
 ```bash
 npm install
 npm run dev
 ```
 
-## إعداد Android
+The UI runs in local demo mode when Supabase credentials are absent. Demo orders and edits are saved only in the current browser/device.
+
+## Configure Supabase
+1. Create a Supabase project.
+2. Copy `.env.example` to `.env.local` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+3. Review and run `supabase/schema.sql` in the Supabase SQL editor.
+4. Create private Storage buckets named `prescriptions` and `partner-documents`; create `product-images` with an explicit public/private decision. Never expose prescription files publicly.
+5. Configure phone OTP/SMS, trusted admin provisioning, Edge Functions for status transitions, dispatch, notifications, and payment verification.
+6. Use short-lived signed URLs for medical files. Do not put a Supabase `service_role` key in the app.
+
+Important: The schema includes `create_customer_order(...)`, which calculates prices and delivery from database records. Do not create orders by trusting client-provided totals. Add and test merchant/driver/admin status-transition functions before production. Review all RLS policies with a security engineer.
+
+## Android
+
 ```bash
 npm install
 npx cap add android
 npm run cap:sync
-npm run android:open
+npx cap open android
 ```
-من Android Studio اختر جهازًا أو محاكيًا ثم Run. لإنتاج APK/AAB استخدم Build > Generate Signed Bundle / APK، وأضف مفاتيح التوقيع بأمان.
 
-## إعداد iOS (على Mac فقط)
+Build a debug APK in Android Studio, or use the repository's GitHub Actions workflow after pushing to `main`. Release distribution requires signing keys stored as GitHub secrets or configured securely in Android Studio.
+
+## iOS
+
+Requires macOS and Xcode:
+
 ```bash
 npm install
 npx cap add ios
 npm run cap:sync
-npm run ios:open
+npx cap open ios
 ```
-افتح المشروع في Xcode، اضبط Bundle Identifier وSigning Team وCapabilities، ثم شغّله على محاكي أو iPhone. التوزيع يحتاج حساب Apple Developer وشهادات/ملفات توقيع.
 
-## ربط Supabase
-1. أنشئ مشروع Supabase.
-2. انسخ `.env.example` إلى `.env` وضع `Project URL` و`anon/public key`.
-3. شغّل `supabase/schema.sql` من SQL Editor بعد مراجعته.
-4. أنشئ Storage buckets خاصة للروشتات ومستندات التحقق، مع سياسات تمنع الوصول العام.
-5. نفّذ وظائف خادمية موثوقة لإنشاء الطلبات وحساب السعر والتحقق من الكوبونات وتغيير الحالات واعتماد الصيدليات والمندوبين.
+The CI workflow builds an iOS simulator app only. An App Store IPA requires Apple Developer signing and provisioning.
 
-لا تضع `service_role` key داخل التطبيق. لا تجعل الذكاء الاصطناعي يقرر صرف دواء أو جرعة أو بديل تلقائيًا؛ كل وصفة وبديل يحتاج مراجعة صيدلي مرخص.
+## Required before real launch
+- Real Supabase project, phone OTP and role provisioning.
+- Verified merchant, pharmacy, driver and clinic data.
+- Secure prescription upload, access controls, retention and pharmacist review.
+- Server-side order state transitions, driver dispatch and audit log.
+- Firebase Cloud Messaging/APNs credentials and server-side notification sender.
+- Google Maps or another mapping provider key and cost controls.
+- Vodafone Cash/Instapay integration through an approved provider/merchant agreement; COD remains the initial payment method.
+- Terms, privacy policy, refund/cancellation policy, customer support and local operating agreements.
+- Field testing in Malawy and its villages, then production monitoring/backups.
 
-## مكونات Capacitor المضافة
-Camera, Geolocation, Share, Push Notifications, Haptics, Status Bar, Splash Screen. اطلب الأذونات وقت الحاجة واشرح للمستخدم سبب استخدامها.
-
-## الخطوات المطلوبة قبل الإطلاق
-- مصادقة هاتف/OTP وإدارة جلسات وأدوار موثوقة.
-- لوحات حقيقية مع صلاحيات منفصلة للصيدليات والمندوبين والإدارة.
-- مخزون وأسعار لحظية وطلب متعدد الصيدليات أو تحديد صيدلية واحدة لكل طلب.
-- بوابة دفع مرخصة أو الدفع عند الاستلام وتسويات المندوبين.
-- OCR للروشتة مع موافقة صيدلي، وتخزين طبي خاص ومشفر وسياسة احتفاظ.
-- خرائط ومسارات وإشعارات Push من الخادم.
-- اختبارات Android/iOS، اختبارات اختراق ومراجعة قانونية وتشغيلية داخل مصر.
-
-## بناء تلقائي عبر GitHub Actions
-يوجد workflow في `.github/workflows/mobile-build.yml`. بعد رفع المشروع إلى مستودع GitHub على فرع `main`، سيبني APK تجريبيًا لأندرويد ونسخة iOS للمحاكي (وليست IPA صالحة للنشر). افتح تبويب Actions لتنزيل الـ artifacts. نشر iOS يحتاج توقيعًا وحساب Apple Developer.
+## Important honesty note
+This repository starter is a feature-rich **MVP prototype**. Without backend credentials, provider accounts, verified partner data and deployment, it does not yet create real cross-device orders, process electronic payments, send push notifications, or provide live driver tracking.
