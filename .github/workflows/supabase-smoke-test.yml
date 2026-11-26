@@ -10,21 +10,12 @@ jobs:
   api-health:
     runs-on: ubuntu-latest
     steps:
-      - name: Check Supabase REST endpoint and live categories
+      - name: Read all active launch categories through Supabase Data API
         env:
           SUPABASE_URL: https://qfweejmqooojsedsypen.supabase.co
           SUPABASE_PUBLISHABLE_KEY: sb_publishable_a8Ys0LNdf7UcT6c6lH1KOg_gkXb0X_i
         run: |
           set -euo pipefail
-          code=$(curl --silent --show-error --output /tmp/supabase-response.txt --write-out '%{http_code}' \
-            "$SUPABASE_URL/rest/v1/" \
-            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_PUBLISHABLE_KEY")
-          echo "Supabase REST HTTP status: $code"
-          if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
-            cat /tmp/supabase-response.txt
-            exit 1
-          fi
           curl --fail --silent --show-error \
             "$SUPABASE_URL/rest/v1/categories?select=id,name_ar,slug,sort_order&is_active=eq.true&order=sort_order.asc" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
@@ -36,4 +27,4 @@ jobs:
             console.log(rows.map(row => row.name_ar).join("، "));
             if (rows.length !== 6) process.exit(1);
           '
-          echo "Supabase REST endpoint and all six launch categories are reachable."
+          echo "Supabase Data API returned all six active Mallawi launch categories."
