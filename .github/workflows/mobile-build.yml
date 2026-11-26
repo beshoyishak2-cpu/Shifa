@@ -28,6 +28,17 @@ jobs:
       - run: npm test
       - run: npm install --no-audit --no-fund --save-dev @types/react @types/react-dom
       - run: npm run build
+      - name: Use JSON Capacitor config for CI
+        run: |
+          rm -f capacitor.config.ts capacitor.config.js capacitor.config.mjs
+          cat > capacitor.config.json <<'EOF'
+          {
+            "appId": "com.shifa.mallawi",
+            "appName": "Shifa",
+            "webDir": "dist",
+            "bundledWebRuntime": false
+          }
+          EOF
       - run: npx cap add android
       - run: npx cap sync android
       - name: Build debug APK
