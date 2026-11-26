@@ -43,7 +43,7 @@ jobs:
           cat > capacitor.config.json <<'EOF'
           {
             "appId": "com.shifa.mallawi",
-            "appName": "Shifa",
+            "appName": "جَيّلك",
             "webDir": "dist",
             "bundledWebRuntime": false
           }
