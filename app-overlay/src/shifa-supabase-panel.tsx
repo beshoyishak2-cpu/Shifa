@@ -1,4 +1,6 @@
+/// <reference types="vite/client" />
 import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient, type Session } from '@supabase/supabase-js';
 
@@ -76,20 +78,20 @@ function ShifaConnectionPanel() {
     setAuthMessage(error ? error.message : 'تم تسجيل الخروج.');
   }
 
-  const shell: React.CSSProperties = {
+  const shell: CSSProperties = {
     position: 'fixed', zIndex: 2147483000, right: 12, bottom: 'max(14px, env(safe-area-inset-bottom))',
     width: 'min(360px, calc(100vw - 24px))', fontFamily: 'Cairo, system-ui, sans-serif', direction: 'rtl',
     color: '#15332e'
   };
-  const card: React.CSSProperties = {
+  const card: CSSProperties = {
     background: '#ffffff', border: '1px solid #d5e8e2', borderRadius: 18,
     boxShadow: '0 12px 38px rgba(9,45,37,.22)', overflow: 'hidden'
   };
-  const button: React.CSSProperties = {
+  const button: CSSProperties = {
     border: 0, borderRadius: 11, padding: '10px 13px', background: '#087f68',
     color: '#fff', fontWeight: 800, fontFamily: 'inherit', cursor: 'pointer'
   };
-  const input: React.CSSProperties = {
+  const input: CSSProperties = {
     width: '100%', boxSizing: 'border-box', border: '1px solid #cbded8', borderRadius: 10,
     padding: '10px 12px', font: 'inherit', marginTop: 7, background: '#fff', color: '#15332e'
   };
