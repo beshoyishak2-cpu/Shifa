@@ -5,59 +5,49 @@ app_path = Path("src/App.tsx")
 css_path = Path("src/style.css")
 if not app_path.is_file() or not css_path.is_file():
     raise SystemExit("Brand logo patch requires src/App.tsx and src/style.css")
-
 app = app_path.read_text()
-green = "const SAREE_LOGO_SRC = 'brand/sari3-lockup-green.png';"
-white = "const SAREE_LOGO_WHITE_SRC = 'brand/sari3-lockup-white.png';"
-pattern = re.compile(r"(?m)^\s*(?:export\s+)?(?:const|let|var)\s+SAREE_LOGO_SRC\s*=\s*[^;\n]+;")
-matches = list(pattern.finditer(app))
-if len(matches) > 1:
-    raise SystemExit(f"Found {len(matches)} SAREE_LOGO_SRC declarations; refusing ambiguous edit")
-if matches:
-    app = pattern.sub(green, app, count=1)
-else:
-    anchor = "type Role = 'customer' | 'merchant' | 'driver' | 'admin';"
-    if anchor not in app:
-        raise SystemExit("Could not find stable App.tsx insertion point for SAREE_LOGO_SRC")
-    app = app.replace(anchor, green + "\n" + anchor, 1)
 
-if "SAREE_LOGO_WHITE_SRC" not in app:
-    # Keep the paired lockup constant adjacent to the green source declaration.
-    app = app.replace(green, green + "\n" + white, 1)
+def set_constant(name: str, value: str) -> None:
+    global app
+    pattern = re.compile(r"(?m)^(\s*(?:export\s+)?(?:const|let|var)\s+" + re.escape(name) + r"\s*=\s*)[^;\n]+(;[^\n]*)?")
+    matches = list(pattern.finditer(app))
+    if len(matches) != 1:
+        raise SystemExit(f"Expected one {name} declaration, found {len(matches)}")
+    app = pattern.sub(lambda m: m.group(1) + "'" + value + "';" , app, count=1)
 
-conditional = "src={'/' + (dark ? SAREE_LOGO_WHITE_SRC : SAREE_LOGO_SRC)}"
-app = app.replace("src={SAREE_LOGO_SRC}", conditional)
-app = app.replace("src={SAREE_LOGO_GREEN_SRC}", conditional)
+set_constant("SAREE_LOGO_SRC", "brand/sari3-lockup-green.png")
+set_constant("SAREE_LOGO_WHITE_SRC", "brand/sari3-lockup-white.png")
 
-header_match = re.search(r"<header\b[\s\S]*?</header>", app)
-if not header_match:
-    raise SystemExit("Could not locate the app header to bind the approved lockups")
-header = header_match.group(0)
+# The splash is always on the green brand background, so it always uses the white lockup.
+splash_pattern = re.compile(
+    r"\{SAREE_LOGO_SRC\?\s*<img\b[^>]*src=\{[^}]*SAREE_LOGO_SRC[^}]*\}[^>]*/>\s*:\s*<span[^>]*>سريع</span>\}"
+)
+app, splash_count = splash_pattern.subn(
+    "<img src={'/' + SAREE_LOGO_WHITE_SRC} alt=\\"سريع\\" />", app, count=1
+)
+if splash_count != 1:
+    # Also accept a fallback block with slightly different whitespace/attributes.
+    if "saree-splash-wordmark" in app:
+        raise SystemExit("Could not safely replace the temporary splash text fallback")
 
-# Convert the temporary text-only brand wordmark, if this header still has one.
-text_logo = re.compile(r"<(?:b|strong|span)[^>]*>\s*سريع\s*</(?:b|strong|span)>")
-if "SAREE_LOGO_SRC" not in header and not re.search(r"<img\b[^>]*src=", header):
-    header, count = text_logo.subn(
-        '<img src={\'/\' + (dark ? SAREE_LOGO_WHITE_SRC : SAREE_LOGO_SRC)} alt="سريع" className="brand-logo" />',
-        header, count=1
-    )
-    if count != 1:
-        excerpt = header[:1200].replace("\n", " ")
-        raise SystemExit("Could not identify the temporary text logo in header. Header excerpt: " + excerpt)
-
-# If a header logo already exists, make its source theme-aware.
-if "SAREE_LOGO_SRC" in header and "SAREE_LOGO_WHITE_SRC" in app:
-    header = header.replace("src={SAREE_LOGO_SRC}", conditional)
-    header = header.replace("src={SAREE_LOGO_GREEN_SRC}", conditional)
-
-app = app[:header_match.start()] + header + app[header_match.end():]
+header = re.search(r"<header\b[\s\S]*?</header>", app)
+if not header:
+    raise SystemExit("Could not locate the app header")
+header_text = header.group(0)
+desired = "src={'/' + (dark ? SAREE_LOGO_WHITE_SRC : SAREE_LOGO_SRC)}"
+if desired not in header_text:
+    header_text = re.sub(r"src=\{[^}]*SAREE_LOGO_SRC[^}]*\}", desired, header_text, count=1)
+    if desired not in header_text:
+        raise SystemExit("Could not bind header logo to the dark/light theme")
+app = app[:header.start()] + header_text + app[header.end():]
 app_path.write_text(app)
 
 css = css_path.read_text()
 css += """
-/* Approved Saree3 lockup in the responsive application header. */
+/* Approved Saree3 lockup in the responsive application header and splash. */
 .brand-logo{display:block;width:clamp(112px,18vw,174px);height:48px;object-fit:contain;object-position:right center}
+.saree-splash-brand img{display:block;width:min(68vw,320px);max-height:150px;object-fit:contain}
 @media(max-width:650px){.brand-logo{width:clamp(105px,31vw,140px);height:42px}}
 """
 css_path.write_text(css)
-print("Applied approved green/white Saree3 lockups to the app header.")
+print("Applied approved green/white Saree3 lockups to header and splash; removed text-only splash fallback.")
