@@ -176,7 +176,7 @@ test('welcome artwork is inline and customer navigation is fixed on every viewpo
   assert.ok(source.includes('mobile-bottom-nav'));
   assert.ok(css.includes('body .mobile-bottom-nav{position:fixed!important'));
   assert.ok(source.includes("import './style.css';"));
-  assert.ok(css.includes('padding:7px 8px env(safe-area-inset-bottom,0px)!important'));
+  assert.ok(css.includes('padding-bottom:env(safe-area-inset-bottom,0px)!important'));
   assert.ok(css.includes('z-index:2147483000!important'));
   assert.ok(css.includes('.app.customer-nav-enabled{padding-bottom:'));
   assert.ok(source.includes('createPortal(('));
