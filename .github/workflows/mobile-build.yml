@@ -37,6 +37,7 @@ jobs:
           python3 app-overlay/patch-saree-ops.py
           python3 app-overlay/patch-support.py
           python3 app-overlay/patch-back-navigation.py
+          python3 app-overlay/patch-customer-catalog.py
       - name: Preserve patched source for integration review
         uses: actions/upload-artifact@v4
         with:
