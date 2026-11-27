@@ -21,7 +21,7 @@ jobs:
           versions=()
           for file in "${files[@]}"; do
             name="$(basename "$file")"
-            if [[ ! "$name" =~ ^([0-9]{12})_[a-z0-9_]+\.sql$ ]]; then
+            if [[ ! "$name" =~ ^([0-9]{12,14})_[a-z0-9_]+\.sql$ ]]; then
               echo "Invalid migration filename: $name"
               exit 1
             fi
