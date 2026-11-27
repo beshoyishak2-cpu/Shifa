@@ -25,7 +25,7 @@ A successful build proves compilation and packaging only. It does not prove the 
 - Test checkout/payment receipt submission, rejected-receipt retry, wallet partial/full payment, dispatch races, courier cancellations, delivery commissions and settlement unlock.
 - Verify every Storage bucket policy and private signed-file access.
 - Confirm local address coverage, map accuracy, prescription review by licensed pharmacists and the pharmacy voice-note workflow.
-- Configure production phone verification, push notifications, monitoring, backups, privacy/terms and customer support.
+- Keep the agreed phone/password login without SMS OTP. Because the current phone number is mapped to an internal non-deliverable email identity, it does not prove phone ownership; document this limitation and manually verify partner/courier contact details before activation. Configure push notifications, monitoring, backups, privacy/terms and customer support.
 - Complete physical-device testing on Android and iOS. The iOS workflow currently produces a Simulator build, not a signed installable IPA.
 
 Phone/password login currently maps Egyptian phone numbers to an internal non-deliverable email identity. It does not prove phone ownership and is not a substitute for production OTP verification. The UI enforces a minimum of 8 password characters; leaked-password protection still needs to be enabled in Supabase Auth settings before launch.
