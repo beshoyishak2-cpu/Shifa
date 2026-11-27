@@ -41,13 +41,26 @@ if "<SareeSplash/>" not in app:
     header_end += len("</header>")
     app = app[:header_end] + "<SareeSplash/>" + app[header_end:]
 
+# Track the actual remote catalog fetch and show placeholders instead of a blank grid.
+state_anchor = " const [role,setRole]=useState<Role>('customer'),[tab,setTabState]=useState('home')"
+if "const [catalogLoading,setCatalogLoading]" not in app:
+ if state_anchor not in app:
+  raise SystemExit("Could not locate app state for catalog loading")
+ app = app.replace(state_anchor, " const [catalogLoading,setCatalogLoading]=React.useState(false);\n" + state_anchor, 1)
+load_start = "if(!supabase||!signedInPhone)return;let alive=true;(async()=>{const [{data:merchantRows,error},{data:categoryRows}]"
+if load_start in app and "setCatalogLoading(true)" not in app:
+ app = app.replace(load_start, "if(!supabase||!signedInPhone)return;let alive=true;setCatalogLoading(true);(async()=>{const [{data:merchantRows,error},{data:categoryRows}]", 1)
+load_end = "})();return()=>{alive=false}},[signedInPhone]);"
+if load_end in app:
+ app = app.replace(load_end, "})().finally(()=>{if(alive)setCatalogLoading(false)});return()=>{alive=false}},[signedInPhone]);", 1)
+
 # Home-only promo and repeat-order shortcuts; no discount or price is fabricated.
 if "saree-home-promo" not in app:
     m = re.search(r"\{role\s*===\s*'customer'\s*&&\s*tab\s*===\s*'home'\s*&&\s*<>", app)
     if not m:
         raise SystemExit("Could not locate customer home screen section for promo banner")
     insert = r"""
-<div className="saree-home-promo">
+{catalogLoading&&<div className="saree-catalog-skeleton" aria-label="جار تحميل المتاجر والمنتجات"><div className="saree-skeleton-card"><i/><span/><span/></div><div className="saree-skeleton-card"><i/><span/><span/></div><div className="saree-skeleton-card"><i/><span/><span/></div></div>}<div className="saree-home-promo">
  <div className="saree-promo-copy"><span className="saree-promo-eyebrow">سريع · ملوي</span><b>طلبك أقرب مما تتخيل</b><small>مطاعم ومتاجر وخدمات يومية في مكان واحد</small><button onClick={()=>setTab('search')}>اكتشف المتاجر <span>←</span></button></div>
  <div className="saree-promo-art" aria-hidden="true"><span>🛍️</span><i>✦</i></div>
 </div>
@@ -64,7 +77,7 @@ app_path.write_text(app)
 css += r"""
 
 /* Saree polish layer — scoped additions, no changes to business logic */
-.saree-splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:var(--green,#078568);color:#fff;animation:saree-splash-in .42s ease-out both}
+.saree-catalog-skeleton{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:0 0 16px}.saree-skeleton-card{display:grid;grid-template-columns:62px 1fr;grid-template-rows:18px 14px;gap:8px 11px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}.saree-skeleton-card i{grid-row:1/3;width:62px;height:62px;border-radius:13px;background:linear-gradient(100deg,var(--line) 20%,color-mix(in srgb,var(--green) 12%,var(--surface)) 45%,var(--line) 70%);background-size:220% 100%;animation:saree-skeleton 1.2s ease-in-out infinite}.saree-skeleton-card span{height:11px;border-radius:8px;background:var(--line)}.saree-skeleton-card span:last-child{width:65%}.saree-splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:var(--green,#078568);color:#fff;animation:saree-splash-in .42s ease-out both}
 .saree-splash-brand{width:124px;height:124px;display:grid;place-items:center;border-radius:34px;background:#ffffff18;box-shadow:0 18px 48px #003e2d30;animation:saree-logo-in .72s cubic-bezier(.2,.8,.2,1) both}
 .saree-splash-brand img{max-width:82%;max-height:82%;object-fit:contain}
 .saree-splash-wordmark{font-size:42px;font-weight:950;letter-spacing:-2px}
