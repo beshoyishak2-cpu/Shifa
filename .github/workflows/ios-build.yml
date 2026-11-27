@@ -45,6 +45,7 @@ jobs:
           python3 app-overlay/patch-mobile-bottom-nav.py
           SAREE_FINAL_PATCH=1 python3 app-overlay/patch-location.py # finalize courier address handoff
           python3 app-overlay/patch-city-spelling.py
+          python3 app-overlay/patch-brand-logo.py
       - name: Upgrade Capacitor packages to v8
         run: |
           npm pkg set "dependencies.@capacitor/core=^8.0.0"
@@ -80,6 +81,11 @@ jobs:
       - name: Verify city spelling in web bundle
         run: |
           if grep -R -n 'ملوي' dist; then echo 'Incorrect city spelling remains in dist'; exit 1; fi
+      - name: Verify approved brand assets in web bundle
+        run: |
+          test -s dist/brand/sari3-icon.png
+          test -s dist/brand/sari3-lockup-white.png
+          test -s dist/brand/sari3-lockup-green.png
       - name: Configure Capacitor for CI
         run: |
           rm -f capacitor.config.ts capacitor.config.js capacitor.config.mjs
@@ -91,9 +97,13 @@ jobs:
             "bundledWebRuntime": false
           }
           EOF
-      - name: Add and sync iOS platform
+      - name: Add iOS platform and generate native brand assets
         run: |
           npx cap add ios
+          python3 -m pip install --user Pillow
+          python3 app-overlay/generate-brand-icons.py
+          test -f ios/App/App/Assets.xcassets/AppIcon.appiconset/Contents.json
+          test -f ios/App/App/Assets.xcassets/Splash.imageset/splash.png
           python3 app-overlay/patch-ios-location-usage.py
           npx cap sync ios
       - name: Prepare public SwiftPM dependency access
