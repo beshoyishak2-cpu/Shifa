@@ -80,7 +80,7 @@ if 'saree-issue-page' not in s:
  if anchor not in s: anchor=" {role==='customer'&&tab==='profile'&&"
  if anchor not in s: raise SystemExit('issue log: page insertion anchor missing')
  s=s.replace(anchor,page+'\n'+anchor,1)
-profile=" {role==='customer'&&tab==='profile'&&"
+profile=" {role==='customer'&&tab==='profile'&&<>"
 if profile in s and 'saree-issue-shortcut' not in s:
  s=s.replace(profile,profile+'<button className="outline full saree-issue-shortcut" onClick={()=>setTab(\'issue-log\')}>سجل المشاكل</button>',1)
 
