@@ -1,6 +1,6 @@
 # تجهيز إصدار Android Release لتطبيق سريع
 
-تم إعداد Workflow لبناء APK موقّع تلقائيًا عند تشغيل بناء Android. لن يُنشأ إصدار Release قبل توفير مفتاح توقيع دائم؛ هذا مقصود حتى لا يتغير مفتاح التطبيق بين التحديثات.
+تم إعداد Workflow لبناء Debug APK وRelease APK وAndroid App Bundle (AAB) موقّع. يقوم مسار Android بترقية حزم Capacitor إلى الإصدار 8 المتوافق مع Android 16 / API 36، ويولّد رقم إصدار فريدًا لكل تشغيل. لن يُنشأ إصدار Release/AAB قبل توفير مفتاح توقيع دائم؛ هذا مقصود حتى لا يتغير مفتاح التطبيق بين التحديثات.
 
 ## 1) إنشاء مفتاح التوقيع مرة واحدة
 
@@ -37,7 +37,7 @@ Windows PowerShell:
 
 ## 3) تشغيل البناء
 
-بعد حفظ الأسرار، افتح Actions → Saree3 Android build → Run workflow. سينتج البناء ملف Debug للاختبار، وملف Release APK موقّع، وملف Android App Bundle بصيغة AAB موقّع للنشر على Google Play إذا كانت الأسرار الأربعة موجودة. يضبط Workflow رقم versionCode فريدًا تلقائيًا من رقم تشغيل GitHub Actions.
+بعد حفظ الأسرار، افتح Actions → Saree3 Android build → Run workflow. سينتج البناء ملف Debug للاختبار، وملف Release APK موقّع، وملف Android App Bundle بصيغة AAB موقّع للنشر على Google Play إذا كانت الأسرار الأربعة موجودة. يضبط Workflow رقم versionCode فريدًا تلقائيًا من رقم تشغيل GitHub Actions ويستهدف API 36 عبر Capacitor 8.
 
 ## تنبيه مهم
 
