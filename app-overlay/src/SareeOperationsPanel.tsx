@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient, type SupabaseClient, type Session } from '@supabase/supabase-js';
 
@@ -46,6 +46,7 @@ function SareeOperationsPanel() {
   const [myOrders, setMyOrders] = useState<Row[]>([]);
   const [wallet, setWallet] = useState<Row | null>(null);
   const [driverAccount, setDriverAccount] = useState<Row | null>(null);
+  const [driverProfile, setDriverProfile] = useState<Row | null>(null);
   const [appSettings, setAppSettings] = useState<Row>({ mobile_wallet_enabled: true, instapay_enabled: true, transfer_phone: '01221236118' });
   const [commission, setCommission] = useState<Row>({ commission_mode: 'percent', commission_value: 0, daily_due_time: '22:00:00', max_debt: 500, auto_lock_enabled: true, transfer_phone: '01221236118' });
   const [appForm, setAppForm] = useState({ application_type: 'merchant', business_type: 'restaurant', display_name: '', phone: '', area_name: 'ملوي', address: '', vehicle_type: 'motorcycle' });
@@ -60,19 +61,20 @@ function SareeOperationsPanel() {
     if (!db || !uid) return;
     const { data: profile } = await db.from('profiles').select('role').eq('id', uid).maybeSingle();
     const currentRole = (profile?.role || 'customer') as Role; setRole(currentRole);
-    const [a, p, s, o, mine, w, d, settings, fees] = await Promise.all([
+    const [a, p, s, o, mine, w, d, driver, settings, fees] = await Promise.all([
       currentRole === 'admin' ? db.from('partner_applications').select('*').eq('status', 'pending').order('created_at', { ascending: false }) : Promise.resolve({ data: [] as Row[] }),
       currentRole === 'admin' ? db.from('payment_receipts').select('*,orders(total,customer_name,customer_phone)').eq('status', 'pending').order('created_at', { ascending: false }) : Promise.resolve({ data: [] as Row[] }),
-      currentRole === 'admin' ? db.from('courier_settlements').select('*,profiles: courier_id(full_name,phone)').eq('status', 'pending').order('created_at', { ascending: false }) : Promise.resolve({ data: [] as Row[] }),
+      currentRole === 'admin' ? db.from('courier_settlements').select('*').eq('status', 'pending').order('created_at', { ascending: false }) : Promise.resolve({ data: [] as Row[] }),
       currentRole === 'driver' ? db.from('orders').select('id,total,status,customer_name,customer_phone,delivery_area,delivery_street,delivery_landmark,delivery_unit_details,delivery_latitude,delivery_longitude,delivery_map_url,merchant_id').eq('status', 'ready_for_pickup').is('courier_id', null).order('created_at', { ascending: true }) : Promise.resolve({ data: [] as Row[] }),
       db.from('orders').select('id,total,status,payment_status,payment_method,created_at,customer_name,customer_phone').eq(currentRole === 'driver' ? 'courier_id' : 'customer_id', uid).in('status', currentRole === 'driver' ? ['ready_for_pickup','picked_up'] : ['pending','accepted','preparing','ready_for_pickup']).order('created_at', { ascending: false }).limit(20),
       currentRole === 'customer' ? db.from('wallet_accounts').select('*').eq('customer_id', uid).maybeSingle() : Promise.resolve({ data: null as Row | null }),
       currentRole === 'driver' ? db.from('courier_settlement_accounts').select('*').eq('courier_id', uid).maybeSingle() : Promise.resolve({ data: null as Row | null }),
+      currentRole === 'driver' ? db.from('courier_profiles').select('is_available,is_verified,locked_for_settlement').eq('user_id', uid).maybeSingle() : Promise.resolve({ data: null as Row | null }),
       db.from('saree_app_settings').select('*').eq('id', true).maybeSingle(),
       currentRole === 'admin' ? db.from('saree_commission_settings').select('*').eq('id', true).maybeSingle() : Promise.resolve({ data: null as Row | null })
     ]);
     setApplications(a.data || []); setReceipts(p.data || []); setSettlements(s.data || []); setOrders(o.data || []); setMyOrders(mine.data || []);
-    setWallet(w.data); setDriverAccount(d.data); if (settings.data) setAppSettings(settings.data); if (fees.data) setCommission(fees.data);
+    setWallet(w.data); setDriverAccount(d.data); setDriverProfile(driver.data); if (settings.data) setAppSettings(settings.data); if (fees.data) setCommission(fees.data);
   }
 
   useEffect(() => {
@@ -92,7 +94,7 @@ function SareeOperationsPanel() {
 
   async function submitPartner() {
     if (!db || !uid) throw new Error('سجّل الدخول أولاً');
-    if (!appForm.display_name.trim() || !appForm.phone.trim()) throw new Error('أكمل الاسم ورقم الهاتف');
+    if (!appForm.display_name.trim() || !appForm.phone.trim()) throw new Error('أكمل الاسم ورقم الهاتف');\n    if (!docs?.length) throw new Error('ارفع المستندات المطلوبة قبل إرسال الطلب');
     const paths: string[] = [];
     for (const file of Array.from(docs || [])) paths.push(await upload('partner-documents', uid, file));
     const { error } = await db.from('partner_applications').insert({ ...appForm, applicant_id: uid, document_paths: paths, status: 'pending' });
@@ -139,7 +141,7 @@ function SareeOperationsPanel() {
     const { error } = await db.rpc('transition_shifa_order', { p_order_id: id, p_next_status: next });
     if (error) throw error; await load(); say('تم تحديث حالة الطلب.');
   }
-  async function submitSettlement(file?: File) {
+  async function toggleDriverAvailability() {\n    if (!db || !uid || !driverProfile?.is_verified) throw new Error('حساب المندوب غير موثق');\n    const next = !driverProfile.is_available;\n    const { data, error } = await db.from('courier_profiles').update({ is_available: next }).eq('user_id', uid).select('is_available,is_verified,locked_for_settlement').maybeSingle();\n    if (error || !data) throw error || new Error('تعذر تحديث حالة التوفر');\n    setDriverProfile(data); say(next ? 'أنت متاح لاستقبال الطلبات.' : 'تم إيقاف استقبال الطلبات.'); await load();\n  }\n  async function submitSettlement(file?: File) {
     if (!db || !uid || !file) throw new Error('اختر صورة إيصال التوريد');
     const path = await upload('payment-receipts', uid, file);
     const { error } = await db.rpc('saree_driver_submit_settlement', { p_receipt_path: path });
@@ -214,7 +216,7 @@ function SareeOperationsPanel() {
           <label><input type="checkbox" checked={!!commission.auto_lock_enabled} onChange={e => setCommission({ ...commission, auto_lock_enabled: e.target.checked })}/> تفعيل القفل التلقائي</label>
           {btn('حفظ إعدادات العمولة', () => void run(saveCommissionSettings))}
         </div>}
-        {role === 'driver' && <><div style={styles.card}><b>المبلغ المستحق للتوريد</b><strong style={{ fontSize: 24 }}>{money(driverAccount?.amount_due)}</strong><span style={styles.muted}>{driverAccount?.locked_for_settlement ? 'حسابك موقوف مؤقتًا لحين التوريد' : 'حسابك متاح وفق حالة التوثيق والتوريد'}</span><span>رقم التحويل: {commission.transfer_phone || appSettings.transfer_phone}</span><label style={{ display: 'grid', gap: 5 }}>إيصال التوريد<input style={styles.input} type="file" accept="image/*" id="saree-settlement-file"/></label>{btn('إرسال إيصال التوريد', () => { const el=document.getElementById('saree-settlement-file') as HTMLInputElement; void run(() => submitSettlement(el.files?.[0])); })}</div>
+        {role === 'driver' && <><div style={styles.card}><b>المبلغ المستحق للتوريد</b><strong style={{ fontSize: 24 }}>{money(driverAccount?.amount_due)}</strong><span style={styles.muted}>{driverProfile?.locked_for_settlement ? 'حسابك موقوف مؤقتًا لحين التوريد' : driverProfile?.is_verified ? 'حسابك موثق' : 'حسابك ينتظر التوثيق'}</span>{btn(driverProfile?.is_available ? 'إيقاف استقبال الطلبات' : 'متاح لاستقبال الطلبات', () => void run(toggleDriverAvailability), true)}<span>رقم التحويل: {commission.transfer_phone || appSettings.transfer_phone}</span><label style={{ display: 'grid', gap: 5 }}>إيصال التوريد<input style={styles.input} type="file" accept="image/*" id="saree-settlement-file"/></label>{btn('إرسال إيصال التوريد', () => { const el=document.getElementById('saree-settlement-file') as HTMLInputElement; void run(() => submitSettlement(el.files?.[0])); })}</div>
           <b>الطلبات المتاحة ({orders.length})</b>{orders.map(o => <article style={styles.card} key={o.id}><b>{money(o.total)} · طلب جاهز للاستلام</b><span>{o.customer_name} · {o.customer_phone}</span><span>{[o.delivery_area,o.delivery_street,o.delivery_landmark,o.delivery_unit_details].filter(Boolean).join(' - ')}</span>{o.delivery_map_url && <a href={o.delivery_map_url} target="_blank" rel="noreferrer">فتح موقع العميل على الخريطة</a>}{btn('قبول الطلب', () => void run(() => acceptOrder(o.id)))}</article>)}
           <b>الطلبات المسندة إليك</b>{myOrders.map(o => <article style={styles.card} key={o.id}><b>{money(o.total)} · {o.status}</b>{o.status==='ready_for_pickup' && <div style={styles.row}>{btn('استلمت من المتجر', () => void run(() => moveOrder(o.id,'picked_up')))}{btn('اعتذار / إلغاء', () => void run(() => releaseOrder(o.id)), true)}</div>}{o.status==='picked_up' && btn('تم تسليم الطلب', () => void run(() => moveOrder(o.id,'delivered')))}</article>)}</>}
         {role === 'customer' && tab === 'main' && <><div style={styles.card}><b>رصيد محفظتك</b><strong style={{ fontSize: 24 }}>{money(wallet?.balance)}</strong></div><b>طلباتك التي تنتظر الدفع</b>{myOrders.filter(o => o.payment_status !== 'paid').map(o => <article style={styles.card} key={o.id}><b>طلب {o.id.slice(0,8)} · {money(o.total)}</b><span>حالة الدفع: {o.payment_status || 'unpaid'}</span><select style={styles.input} value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}><option value="mobile_wallet">محفظة إلكترونية</option><option value="instapay">إنستا باي</option></select><span>حوّل إلى: {appSettings.transfer_phone}</span><label>صورة إيصال التحويل<input style={styles.input} type="file" accept="image/*" id={'pay-'+o.id}/></label>{btn('إرسال الإيصال', () => {const el=document.getElementById('pay-'+o.id) as HTMLInputElement;void run(()=>submitOrderPayment(o.id,el.files?.[0]));})}</article>)}</>}
