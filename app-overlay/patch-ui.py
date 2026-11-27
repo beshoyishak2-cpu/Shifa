@@ -14,6 +14,8 @@ def replace_once(text, old, new, label):
     return text.replace(old, new, 1)
 
 app = app_path.read_text()
+app = app.replace("import { useEffect, useMemo, useState } from 'react';", "import { useEffect, useMemo, useRef, useState } from 'react';")
+app = app.replace(" const notify=(s:string)=>{setToast(s);window.setTimeout(()=>setToast(''),3000)};", " const toastTimer=useRef<number|undefined>(undefined);\n const notify=(s:string)=>{if(toastTimer.current!==undefined)window.clearTimeout(toastTimer.current);setToast(s);toastTimer.current=window.setTimeout(()=>{setToast('');toastTimer.current=undefined},3500)};")
 app = replace_once(app,
 "type StoreItem = {id:string;name:string;type:Exclude<Service,'all'|'doctors'|'errand'>;area:string;rating:number;eta:string;fee:number;min:number;open:boolean;desc:string;icon:string;featured?:boolean};",
 "type StoreItem = {id:string;name:string;type:Exclude<Service,'all'|'doctors'|'errand'>;area:string;rating:number;eta:string;fee:number;min:number;open:boolean;desc:string;icon:string;image?:string;featured?:boolean};",
