@@ -42,6 +42,7 @@ jobs:
           python3 /tmp/patch-product-options.py
           python3 app-overlay/patch-merchant-operations.py
           python3 app-overlay/patch-mobile-bottom-nav.py
+          python3 app-overlay/patch-location.py # finalize courier address handoff
       - name: Upgrade Capacitor packages to v8
         run: |
           npm pkg set "dependencies.@capacitor/core=^8.0.0"
