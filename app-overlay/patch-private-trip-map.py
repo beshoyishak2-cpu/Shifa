@@ -6,7 +6,7 @@ if "import PrivateTripMap from './PrivateTripMap';" not in s:
  s=s.replace("import LocationSystem from './LocationSystem';","import LocationSystem from './LocationSystem';\nimport PrivateTripMap from './PrivateTripMap';",1)
 pattern=r"\s*\{role==='customer'&&tab==='errand'&&<>.*?<button className=\"primary full\" onClick=\{submitTrip\}>اطلب مندوب الآن</button></section></>\}"
 if "tab==='errand'&&<PrivateTripMap" not in s:
- s,n=re.subn(pattern,"\n {role==='customer'&&tab==='errand'&&<PrivateTripMap notify={notify}/ >}",s,count=1,flags=re.S)
+ s,n=re.subn(pattern,"\n {role==='customer'&&tab==='errand'&&<PrivateTripMap notify={notify}/>}",s,count=1,flags=re.S)
  if n!=1: raise SystemExit("Could not replace old private trip form")
 app.write_text(s)
 styles="""
