@@ -15,21 +15,14 @@ if '<LocationSystem/>' not in s:
     if "</header>" not in s: raise SystemExit("Cannot find app header insertion point")
     s=s.replace("</header>","</header><LocationSystem/>",1)
 
-replace_once(
- "type AddressDraft = {id?:string;name:string;area:string;street:string;landmark:string;lat:number|null;lng:number|null};",
- "type AddressDraft = {id?:string;name:string;area:string;street:string;landmark:string;unit?:string;lat:number|null;lng:number|null};",
- "address draft type"
-)
-replace_once(
- "load<AddressDraft>('address',{id:'',name:'المنزل',area:'وسط ملوي',street:'',landmark:'',lat:null,lng:null})",
- "load<AddressDraft>('address',{id:'',name:'المنزل',area:'وسط ملوي',street:'',landmark:'',unit:'',lat:null,lng:null})",
- "address draft defaults"
-)
-replace_once(
- "setAddress({id:selected.id||'',name:selected.label||'المنزل',area:selected.area||'',street:selected.street||'',landmark:selected.landmark||'',lat:selected.lat??null,lng:selected.lng??null});",
- "setAddress({id:selected.id||'',name:selected.label||'المنزل',area:selected.area||'',street:selected.street||'',landmark:selected.landmark||'',unit:selected.unit||'',lat:selected.lat??null,lng:selected.lng??null});",
- "selected address event"
-)
+# The archive's original source may format or infer this type differently.
+import re
+s=re.sub(r"(type\\s+AddressDraft\\s*=\\s*\\{[^}]*landmark:string;)([^}]*\\};)",r"\\1unit?:string;\\2",s,count=1)
+s=s.replace("landmark:selected.landmark||'',lat:selected.lat??null", "landmark:selected.landmark||'',unit:selected.unit||'',lat:selected.lat??null",1)
+s=s.replace("delivery_area,delivery_street,delivery_landmark,delivery_latitude", "delivery_area,delivery_street,delivery_landmark,delivery_unit_details,delivery_latitude",1)
+s=s.replace("[o.delivery_area,o.delivery_street,o.delivery_landmark].filter(Boolean)", "[o.delivery_area,o.delivery_street,o.delivery_landmark,o.delivery_unit_details].filter(Boolean)",1)
+s=s.replace("o.delivery_map_url||((o.delivery_latitude!=null&&o.delivery_longitude!=null)?`https://www.google.com/maps?q=${o.delivery_latitude},${o.delivery_longitude}`:undefined)", "(o.delivery_latitude!=null&&o.delivery_longitude!=null)?`https://www.openstreetmap.org/?mlat=${o.delivery_latitude}&mlon=${o.delivery_longitude}#map=18/${o.delivery_latitude}/${o.delivery_longitude}`:undefined",1)
+s=s.replace("${address.area} – ${address.street} – ${address.landmark}", "${address.area} – ${address.street} – ${address.landmark} – ${address.unit||''}",1)
 
 # Ensure the courier receives the immutable unit/building details saved with the order.
 replace_once(
