@@ -17,7 +17,7 @@ function AdvancedAdmin(){
  const [stock,setStock]=useState({product_id:'',batch_code:'',quantity:'1',expiry_date:''});
  const [zone,setZone]=useState({merchant_id:'',area_name:'',delivery_fee:'0',minimum_order:'0',estimated_minutes:'45'});
  const [alt,setAlt]=useState({product_id:'',alternative_product_id:'',merchant_id:''});
- const [opened,setOpened]=useState(false),[medicineQuery,setMedicineQuery]=useState(''),[medicineArea,setMedicineArea]=useState('ملوي'),[medicineResults,setMedicineResults]=useState<R[]>([]),[medicineBusy,setMedicineBusy]=useState(false);
+ const [opened,setOpened]=useState(false),[medicineQuery,setMedicineQuery]=useState(''),[medicineArea,setMedicineArea]=useState('ملوي'),[medicineResults,setMedicineResults]=useState<R[]>([]),[medicineBusy,setMedicineBusy]=useState(false),[customerOrders,setCustomerOrders]=useState<R[]>([]),[refundForm,setRefundForm]=useState({order_id:'',amount:'',reason:''});
  const say=(s:string)=>setMsg(s);
  async function load(){
   if(!client||!user)return;
@@ -37,8 +37,16 @@ function AdvancedAdmin(){
   if(!zone.merchant_id&&m.data?.length)setZone(v=>({...v,merchant_id:m.data![0].id}));
   if(!alt.product_id&&p.data?.length)setAlt(v=>({...v,product_id:p.data![0].id,alternative_product_id:p.data!.find(q=>q.id!==p.data![0].id)?.id||'',merchant_id:p.data![0].merchant_id}));
  }
- useEffect(()=>{if(!client)return;client.auth.getSession().then(async({data})=>{const id=data.session?.user.id||null;setUser(id);if(id){const r=await client.from('profiles').select('role').eq('id',id).maybeSingle();setAdmin(r.data?.role==='admin');}});const {data:l}=client.auth.onAuthStateChange(async(_e,s)=>{const id=s?.user.id||null;setUser(id);if(id){const r=await client.from('profiles').select('role').eq('id',id).maybeSingle();setAdmin(r.data?.role==='admin');}else setAdmin(false);});return()=>l.subscription.unsubscribe();},[]);
+ useEffect(()=>{if(!client)return;client.auth.getSession().then(async({data})=>{const id=data.session?.user.id||null;setUser(id);if(id){const r=await client.from('profiles').select('role').eq('id',id).maybeSingle();setAdmin(r.data?.role==='admin');const {data:orders}=await client.from('orders').select('id,total,status,created_at').eq('customer_id',id).eq('status','delivered').order('created_at',{ascending:false}).limit(30);setCustomerOrders(orders||[]);if(orders?.length&&!refundForm.order_id)setRefundForm(v=>({...v,order_id:orders[0].id,amount:String(orders[0].total)}));}});const {data:l}=client.auth.onAuthStateChange(async(_e,s)=>{const id=s?.user.id||null;setUser(id);if(id){const r=await client.from('profiles').select('role').eq('id',id).maybeSingle();setAdmin(r.data?.role==='admin');const {data:orders}=await client.from('orders').select('id,total,status,created_at').eq('customer_id',id).eq('status','delivered').order('created_at',{ascending:false}).limit(30);setCustomerOrders(orders||[]);if(orders?.length)setRefundForm(v=>({...v,order_id:orders[0].id,amount:String(orders[0].total)}));}else{setAdmin(false);setCustomerOrders([]);}});return()=>l.subscription.unsubscribe();},[]);
  useEffect(()=>{if(admin&&user)void load();},[admin,user]);
+ async function submitRefund(){
+  if(!client)throw Error('الاتصال غير متاح');
+  const amount=Number(refundForm.amount);
+  if(!refundForm.order_id||!Number.isFinite(amount)||amount<=0||refundForm.reason.trim().length<3)throw Error('أكمل الطلب والمبلغ وسبب الاسترجاع');
+  const {error}=await client.rpc('saree_submit_refund_request',{p_order_id:refundForm.order_id,p_amount:amount,p_reason:refundForm.reason.trim()});
+  if(error)throw error;
+  setRefundForm(v=>({...v,reason:''}));say('تم إرسال طلب الاسترجاع للإدارة للمراجعة.');
+ }
  async function searchPharmacyStock(){
   if(!client)throw Error('الاتصال غير متاح');
   if(medicineQuery.trim().length<2)throw Error('اكتب اسم دواء من حرفين على الأقل');
@@ -66,7 +74,7 @@ function AdvancedAdmin(){
  <input style={css.input} placeholder="المنطقة" value={medicineArea} onChange={e=>setMedicineArea(e.target.value)}/>
  {button(medicineBusy?'جارٍ البحث…':'ابحث في الصيدليات',()=>void run(searchPharmacyStock))}
  <div style={css.card}><span>النتائج تعرض الكميات المسجلة في دفعات بتاريخ صلاحية معلوم وغير منتهٍ فقط. توافر الدواء لا يغني عن استشارة الصيدلي.</span></div>
- {medicineResults.length===0?<div style={css.card}>لا توجد نتائج حتى الآن. قد لا تكون الصيدليات سجلت دفعات المخزون بعد.</div>:medicineResults.map((x,i)=><article style={css.card} key={x.product_id+'-'+x.pharmacy_name+'-'+i}><b>{x.product_name}</b><span>{x.pharmacy_name} · {x.area_name||medicineArea}</span><span>السعر: {fmt(x.unit_price)} · الكمية المسجلة: {x.available_quantity}</span><span>أقرب انتهاء صلاحية مسجل: {x.nearest_expiry}</span></article>)}</div></section>}
+ {medicineResults.length===0?<div style={css.card}>لا توجد نتائج حتى الآن. قد لا تكون الصيدليات سجلت دفعات المخزون بعد.</div>:medicineResults.map((x,i)=><article style={css.card} key={x.product_id+'-'+x.pharmacy_name+'-'+i}><b>{x.product_name}</b><span>{x.pharmacy_name} · {x.area_name||medicineArea}</span><span>السعر: {fmt(x.unit_price)} · الكمية المسجلة: {x.available_quantity}</span><span>أقرب انتهاء صلاحية مسجل: {x.nearest_expiry}</span></article>)}<div style={css.card}><b>طلب استرجاع طلب تم تسليمه</b>{customerOrders.length===0?<span>لا توجد طلبات مسلّمة مؤهلة حاليًا.</span>:<><select style={css.input} value={refundForm.order_id} onChange={e=>{const o=customerOrders.find(x=>x.id===e.target.value);setRefundForm(v=>({...v,order_id:e.target.value,amount:String(o?.total||'')}));}}>{customerOrders.map(o=><option key={o.id} value={o.id}>طلب {o.id.slice(0,8)} · {fmt(o.total)}</option>)}</select><input style={css.input} type="number" min="0.01" max={customerOrders.find(o=>o.id===refundForm.order_id)?.total||0} value={refundForm.amount} onChange={e=>setRefundForm(v=>({...v,amount:e.target.value}))} placeholder="مبلغ الاسترجاع"/><textarea style={css.input} rows={3} placeholder="سبب طلب الاسترجاع" value={refundForm.reason} onChange={e=>setRefundForm(v=>({...v,reason:e.target.value}))}/>{button('إرسال طلب الاسترجاع',()=>void run(submitRefund))}</>}</div></div></section>}
  </div>;
  return <div style={css.wrap}>{!opened?<button style={css.trigger} onClick={()=>{setOpened(true);void load();}}>إدارة متقدمة · سريع</button>:<section style={css.panel}>
  <header style={css.head}><div><b>سريع · الإدارة المتقدمة</b><div style={css.muted}>المخزون والصلاحية والصلاحيات والتوصيل والاسترجاع</div></div><button style={css.btn} onClick={()=>setOpened(false)}>إغلاق</button></header>
