@@ -26,32 +26,47 @@ state=re.search(r"\[role,setRole\]=useState<Role>\('customer'\)",s)
 if state and '[issueLog,setIssueLog]' not in s:
  s=s[:state.end()]+",[issueLog,setIssueLog]=useState<any[]>(()=>{try{return JSON.parse(localStorage.getItem(SAREE_ISSUE_KEY)||'[]')}catch{return []}})"+s[state.end():]
 
+# Install diagnostics before App/Supabase modules are evaluated so backend requests are covered.
+diag=Path("src/lib/issue-log.ts")
+diag.parent.mkdir(parents=True,exist_ok=True)
+if not diag.exists():
+ diag.write_text("""
+const KEY='saree3:issue-log:v1';
+function record(message:unknown){
+ try{const old=JSON.parse(localStorage.getItem(KEY)||'[]');const rows=Array.isArray(old)?old:[];
+ rows.unshift({at:new Date().toISOString(),screen:(window as any).__SAREE3_ACTIVE_SCREEN__||'غير محدد',message:String(message instanceof Error?message.message:message||'خطأ غير معروف').slice(0,500)});
+ localStorage.setItem(KEY,JSON.stringify(rows.slice(0,50)));window.dispatchEvent(new Event('saree3:issue-log-updated'));
+ }catch{}
+}
+if(typeof window!=='undefined'&&!(window as any).__SAREE3_DIAGNOSTICS_READY__){
+ (window as any).__SAREE3_DIAGNOSTICS_READY__=true;
+ window.addEventListener('error',(e:ErrorEvent)=>record(e.message||e.error));
+ window.addEventListener('unhandledrejection',(e:PromiseRejectionEvent)=>record(e.reason));
+ const original=window.fetch.bind(window);
+ window.fetch=(async(...args:Parameters<typeof fetch>)=>{
+  const u=typeof args[0]==='string'?args[0]:args[0] instanceof Request?args[0].url:String(args[0]);
+  try{const response=await original(...args);if(!response.ok)record('فشل نداء الخادم ('+response.status+') '+u);return response}
+  catch(e){record('تعذر الاتصال بالخادم '+u+': '+String(e));throw e}
+ }) as typeof fetch;
+}
+""",encoding="utf-8")
+main=Path("src/main.tsx")
+if not main.exists(): raise SystemExit("src/main.tsx missing for diagnostics import")
+mt=main.read_text(encoding="utf-8")
+if "import './lib/issue-log';" not in mt:
+ main.write_text("import './lib/issue-log';\\n"+mt,encoding="utf-8")
+
 effect=r"""
  useEffect(()=>{
-  const screen=()=>role+' / '+tab+(selectedStore?' / '+selectedStore:'');
   const refresh=()=>{try{const v=JSON.parse(localStorage.getItem(SAREE_ISSUE_KEY)||'[]');setIssueLog(Array.isArray(v)?v.slice(0,50):[])}catch{setIssueLog([])}};
-  const onError=(e:ErrorEvent)=>sareeRecordIssue(e.message||e.error,screen());
-  const onReject=(e:PromiseRejectionEvent)=>sareeRecordIssue(e.reason,screen());
-  (window as any).__SAREE3_ACTIVE_SCREEN__=screen();
-  window.addEventListener('error',onError);window.addEventListener('unhandledrejection',onReject);
+  (window as any).__SAREE3_ACTIVE_SCREEN__=role+' / '+tab+(selectedStore?' / '+selectedStore:'');
   window.addEventListener('saree3:issue-log-updated',refresh);
-  const originalFetch=window.fetch.bind(window);
-  if(!(window as any).__SAREE3_FETCH_WRAPPED__){
-   (window as any).__SAREE3_FETCH_WRAPPED__=true;
-   window.fetch=(async(...args:Parameters<typeof fetch>)=>{
-    const u=typeof args[0]==='string'?args[0]:args[0] instanceof Request?args[0].url:String(args[0]);
-    try{const response=await originalFetch(...args);if(!response.ok)sareeRecordIssue('فشل نداء الخادم ('+response.status+') '+u,(window as any).__SAREE3_ACTIVE_SCREEN__);return response}
-    catch(error){sareeRecordIssue('تعذر الاتصال بالخادم '+u+': '+String(error),(window as any).__SAREE3_ACTIVE_SCREEN__);throw error}
-   }) as typeof fetch;
-  }
-  return()=>{window.removeEventListener('error',onError);window.removeEventListener('unhandledrejection',onReject);window.removeEventListener('saree3:issue-log-updated',refresh)};
+  return()=>window.removeEventListener('saree3:issue-log-updated',refresh);
  },[role,tab,selectedStore]);
 """
-if 'SAREE3_FETCH_WRAPPED' not in s:
- anchor=' const count=cart.reduce'
- if anchor not in s: raise SystemExit('issue logger: effect anchor missing')
- s=s.replace(anchor,effect+'\n'+anchor,1)
-
+if 'const count=cart.reduce' not in s: raise SystemExit("issue log effect anchor missing")
+s=s[:start]+replacement+s[end:]
+s=s.replace("if 'SAREE3_FETCH_WRAPPED' not in s:\n anchor=' const count=cart.reduce'\n if anchor not in s: raise SystemExit('issue logger: effect anchor missing')\n s=s.replace(anchor,effect+'\\n'+anchor,1)","if 'saree-issue-page' not in s:\n anchor=' const count=cart.reduce'\n s=s.replace(anchor,effect+'\\n'+anchor,1)")
 page=r"""
  {tab==='issue-log'&&<section className="panel saree-issue-page" dir="rtl"><div className="section-title"><h2>سجل المشاكل</h2><button className="outline" onClick={()=>setTab('profile')}>رجوع</button></div>
  {!issueLog.length?<p className="muted">مفيش مشاكل مسجلة</p>:issueLog.map((x:any,i:number)=><article className="saree-issue-item" key={i}><b>{new Date(x.at).toLocaleString('ar-EG')}</b><small>{x.screen||'غير محدد'}</small><p>{x.message}</p></article>)}
