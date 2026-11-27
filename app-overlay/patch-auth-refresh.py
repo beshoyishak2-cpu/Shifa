@@ -26,6 +26,14 @@ if old_customer_phone in s:
 elif new_customer_phone not in s:
     raise SystemExit("Could not locate customer phone hydration")
 
+# Keep address widgets in sync after authentication changes.
+old_listener = "supabase.auth.onAuthStateChange((_event:string,session:Session|null)=>{void hydrate(session)})"
+new_listener = "supabase.auth.onAuthStateChange((_event:string,session:Session|null)=>{window.dispatchEvent(new Event('saree3:auth-changed'));void hydrate(session)})"
+if old_listener in s:
+    s = s.replace(old_listener, new_listener, 1)
+elif new_listener not in s:
+    raise SystemExit("Could not locate auth state listener")
+
 p.write_text(s)
 
 test_path = Path("tests/source-smoke.test.cjs")
