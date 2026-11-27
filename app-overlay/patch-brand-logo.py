@@ -11,9 +11,17 @@ def set_constant(name: str, value: str) -> None:
     global app
     pattern = re.compile(r"(?m)^(\s*(?:export\s+)?(?:const|let|var)\s+" + re.escape(name) + r"\s*=\s*)[^;\n]+(;[^\n]*)?")
     matches = list(pattern.finditer(app))
-    if len(matches) != 1:
-        raise SystemExit(f"Expected one {name} declaration, found {len(matches)}")
-    app = pattern.sub(lambda m: m.group(1) + "'" + value + "';" , app, count=1)
+    if len(matches) > 1:
+        raise SystemExit(f"Expected at most one {name} declaration, found {len(matches)}")
+    if matches:
+        app = pattern.sub(lambda m: m.group(1) + "'" + value + "';", app, count=1)
+    elif name == "SAREE_LOGO_WHITE_SRC":
+        green_decl = re.search(r"(?m)^.*const SAREE_LOGO_SRC\s*=\s*[^;]+;.*$", app)
+        if not green_decl:
+            raise SystemExit("Cannot add white lockup constant without SAREE_LOGO_SRC")
+        app = app[:green_decl.end()] + "\nconst SAREE_LOGO_WHITE_SRC = '" + value + "';" + app[green_decl.end():]
+    else:
+        raise SystemExit(f"Expected one {name} declaration, found none")
 
 set_constant("SAREE_LOGO_SRC", "brand/sari3-lockup-green.png")
 set_constant("SAREE_LOGO_WHITE_SRC", "brand/sari3-lockup-white.png")
