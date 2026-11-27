@@ -14,8 +14,8 @@ if "const SAREE_LOGO_SRC" not in app:
     splash = r"""
 const SAREE_LOGO_SRC = ''; // ضع مسار ملف الشعار هنا لاحقًا، ويُستخدم في شاشة البداية
 function SareeSplash(){
- const [visible,setVisible]=React.useState(true);
- React.useEffect(()=>{
+ const [visible,setVisible]=useState(true);
+ useEffect(()=>{
   const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const timer=window.setTimeout(()=>setVisible(false),reduce?650:2350);
   return()=>window.clearTimeout(timer);
@@ -46,7 +46,7 @@ state_anchor = " const [role,setRole]=useState<Role>('customer'),[tab,setTabStat
 if "const [catalogLoading,setCatalogLoading]" not in app:
  if state_anchor not in app:
   raise SystemExit("Could not locate app state for catalog loading")
- app = app.replace(state_anchor, " const [catalogLoading,setCatalogLoading]=React.useState(false);\n" + state_anchor, 1)
+ app = app.replace(state_anchor, " const [catalogLoading,setCatalogLoading]=useState(false);\n" + state_anchor, 1)
 load_start = "if(!supabase||!signedInPhone)return;let alive=true;(async()=>{const [{data:merchantRows,error},{data:categoryRows}]"
 if load_start in app and "setCatalogLoading(true)" not in app:
  app = app.replace(load_start, "if(!supabase||!signedInPhone)return;let alive=true;setCatalogLoading(true);(async()=>{const [{data:merchantRows,error},{data:categoryRows}]", 1)
