@@ -1,0 +1,1 @@
+create index if not exists saree_product_alternatives_admin_reviewed_by_idx on public.saree_product_alternatives(admin_reviewed_by);
