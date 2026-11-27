@@ -21,6 +21,8 @@ jobs:
           python3 app-overlay/patch-ui.py
           cp app-overlay/LocationSystem.tsx src/LocationSystem.tsx
           python3 app-overlay/patch-location.py
+          python3 -c "import base64,gzip,pathlib; pathlib.Path('/tmp/patch-live-backend.py').write_bytes(gzip.decompress(base64.b64decode(pathlib.Path('app-overlay/patch-live-backend.py.gz.b64').read_text())))"
+          python3 /tmp/patch-live-backend.py
       - name: Configure Supabase client for app build
         run: |
           cat > .env.production <<'EOF'
