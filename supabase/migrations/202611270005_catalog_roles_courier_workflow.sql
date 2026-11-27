@@ -147,3 +147,31 @@ grant execute on function public.transition_shifa_order(uuid,public.shifa_order_
 
 comment on column public.profiles.role is
   'Customer by default. Merchant, driver, and admin roles require approval; self-service role escalation is blocked.';
+
+
+-- Fill the customer contact snapshot for the trusted checkout RPC.
+create or replace function public.shifa_fill_order_customer_snapshot()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_name text;
+  v_phone text;
+begin
+  select full_name, phone into v_name, v_phone
+  from public.profiles where id = new.customer_id;
+  if coalesce(new.customer_name, '') = '' then
+    new.customer_name := coalesce(v_name, '');
+  end if;
+  if coalesce(new.customer_phone, '') = '' then
+    new.customer_phone := coalesce(v_phone, '');
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists shifa_fill_order_customer_snapshot_trigger on public.orders;
+create trigger shifa_fill_order_customer_snapshot_trigger
+before insert on public.orders
+for each row execute procedure public.shifa_fill_order_customer_snapshot();
