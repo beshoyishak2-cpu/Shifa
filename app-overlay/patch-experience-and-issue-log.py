@@ -168,7 +168,7 @@ s=re.sub(r'<div className="saree-home-promo">[\s\S]*?</div>\s*<div className="sa
 test_file=Path("tests/source-smoke.test.cjs")
 if test_file.exists():
  t=test_file.read_text(encoding="utf-8")
- t=t.replace("assert.ok(source.includes('className=\\\"hero-art\\\" aria-hidden=\\\"true\\\"><svg viewBox=\\\"0 0 160 160\\\"'))","assert.ok(source.includes('src=\\\"/brand/saree-hero-illustration.svg\\\"'))")
+ t=t.replace("""assert.ok(source.includes('className="hero-art" aria-hidden="true"><svg viewBox="0 0 160 160"'))""","""assert.ok(source.includes('src="/brand/saree-hero-illustration.svg"'))""")
  test_file.write_text(t,encoding="utf-8")
 
 p.write_text(s,encoding="utf-8")
