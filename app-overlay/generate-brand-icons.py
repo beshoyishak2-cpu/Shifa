@@ -87,7 +87,14 @@ def generate_ios(icon,bg,white):
     (splashset/"Contents.json").write_text(json.dumps({"images":[{"filename":"splash.png","idiom":"universal"}],"info":{"author":"xcode","version":1}},indent=2)+"\n",encoding="utf-8")
 icon=load_png(ICON); white=load_png(WHITE); load_png(GREEN)
 bg="#{:02X}{:02X}{:02X}".format(*icon.getpixel((0,0))[:3])
-if not (ROOT/"android/app").is_dir(): raise SystemExit("Android platform missing: run npx cap add android before icon generation.")
-if not (ROOT/"ios/App/App").is_dir(): raise SystemExit("iOS platform missing: run npx cap add ios before icon generation.")
-generate_android(icon,bg,white); generate_ios(icon,bg,white)
-print(f"Generated Android/iOS icons and 2732x2732 splash images; background={bg}")
+android_present=(ROOT/"android/app").is_dir()
+ios_present=(ROOT/"ios/App/App").is_dir()
+if not android_present and not ios_present:
+    raise SystemExit("No native platform found. Run npx cap add android or npx cap add ios before icon generation.")
+if android_present:
+    generate_android(icon,bg,white)
+    print("Generated Android mipmap/adaptive icons and drawable splash.")
+if ios_present:
+    generate_ios(icon,bg,white)
+    print("Generated iOS AppIcon.appiconset and Splash.imageset.")
+print(f"Brand asset generation complete; background={bg}")
