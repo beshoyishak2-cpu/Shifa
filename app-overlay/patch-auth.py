@@ -19,7 +19,7 @@ function phoneLoginEmail(phone: string) {
   if (!/^201[0125][0-9]{8}$/.test(digits)) {
     throw new Error('اكتب رقم موبايل مصري صحيح');
   }
-  return `${digits}@users.saree3.invalid`;
+  return `${digits}@users.example.com`;
 }
 
 export async function registerWithPhone(phone: string, password: string, fullName: string) {
