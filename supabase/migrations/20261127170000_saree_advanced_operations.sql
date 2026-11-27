@@ -105,7 +105,6 @@ grant select,insert,update,delete on public.saree_role_feature_permissions to au
 grant select,insert,update,delete on public.saree_product_alternatives to authenticated;
 grant select,insert,update on public.saree_refund_requests to authenticated;
 grant select on public.saree_audit_events to authenticated;
-grant usage,select on sequence public.saree_audit_events_id_seq to authenticated;
 
 create policy inventory_read_admin_or_merchant on public.product_inventory_batches
  for select to authenticated using(private.shifa_is_admin() or private.shifa_is_merchant_member(merchant_id));
