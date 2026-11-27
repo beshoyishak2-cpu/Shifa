@@ -23,7 +23,7 @@ splash_pattern = re.compile(
     r"\{SAREE_LOGO_SRC\?\s*<img\b[^>]*src=\{[^}]*SAREE_LOGO_SRC[^}]*\}[^>]*/>\s*:\s*<span[^>]*>سريع</span>\}"
 )
 app, splash_count = splash_pattern.subn(
-    "<img src={'/' + SAREE_LOGO_WHITE_SRC} alt=\\"سريع\\" />", app, count=1
+    '''<img src={'/' + SAREE_LOGO_WHITE_SRC} alt="سريع" />''', app, count=1
 )
 if splash_count != 1:
     # Also accept a fallback block with slightly different whitespace/attributes.
