@@ -124,7 +124,10 @@ function SareeOperationsPanel() {
     const { error } = await db.rpc('saree_admin_confirm_settlement', { p_settlement_id: id, p_note: 'تم استلام التوريد' });
     if (error) throw error; await load(); say('تم تأكيد التوريد وفتح حساب المندوب.');
   }
-  async function copyTransferNumber() {\n    try { await navigator.clipboard.writeText(appSettings.transfer_phone); say('تم نسخ رقم التحويل.'); } catch { say('تعذر النسخ تلقائيًا؛ اضغط مطولًا على الرقم لنسخه.'); }\n  }\n  async function openPrivateFile(bucket: string, path: string) {
+  async function copyTransferNumber() {
+    try { await navigator.clipboard.writeText(appSettings.transfer_phone); say('تم نسخ رقم التحويل.'); } catch { say('تعذر النسخ تلقائيًا؛ اضغط مطولًا على الرقم لنسخه.'); }
+  }
+  async function openPrivateFile(bucket: string, path: string) {
     if (!db) return;
     const { data, error } = await db.storage.from(bucket).createSignedUrl(path, 90);
     if (error) throw error; if (data?.signedUrl) window.open(data.signedUrl, '_blank', 'noopener');
