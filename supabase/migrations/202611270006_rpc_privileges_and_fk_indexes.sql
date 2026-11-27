@@ -1,0 +1,23 @@
+-- Restrict app RPCs and trigger handlers after platform default grants.
+revoke execute on function public.create_shifa_order(uuid, uuid, jsonb, text) from anon;
+grant execute on function public.create_shifa_order(uuid, uuid, jsonb, text) to authenticated;
+revoke execute on function public.claim_shifa_order(uuid) from anon;
+grant execute on function public.claim_shifa_order(uuid) to authenticated;
+revoke execute on function public.transition_shifa_order(uuid, public.shifa_order_status) from anon;
+grant execute on function public.transition_shifa_order(uuid, public.shifa_order_status) to authenticated;
+revoke execute on function public.shifa_handle_new_user() from public, anon, authenticated;
+revoke execute on function public.shifa_fill_order_customer_snapshot() from public, anon, authenticated;
+revoke execute on function public.shifa_protect_profile_role() from public, anon, authenticated;
+revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+create index if not exists merchant_members_user_id_idx on public.merchant_members(user_id);
+create index if not exists order_items_order_id_idx on public.order_items(order_id);
+create index if not exists order_items_product_id_idx on public.order_items(product_id);
+create index if not exists order_status_events_changed_by_idx on public.order_status_events(changed_by);
+create index if not exists order_status_events_order_id_idx on public.order_status_events(order_id);
+create index if not exists orders_address_id_idx on public.orders(address_id);
+create index if not exists pharmacy_prescriptions_customer_id_idx on public.pharmacy_prescriptions(customer_id);
+create index if not exists pharmacy_prescriptions_merchant_id_idx on public.pharmacy_prescriptions(pharmacy_merchant_id);
+create index if not exists pharmacy_prescriptions_reviewed_by_idx on public.pharmacy_prescriptions(reviewed_by);
+create index if not exists products_category_id_idx on public.products(category_id);
+create index if not exists support_tickets_customer_id_idx on public.support_tickets(customer_id);
+create index if not exists support_tickets_order_id_idx on public.support_tickets(order_id);
