@@ -11,6 +11,12 @@ if "from('medical_providers')" not in s:
 s=s.replace('doctors.length===0','doctorRows.length===0')
 start=s.find('doctors.filter(d=>'); end=s.find('.includes(doctorSearch))',start)+len('.includes(doctorSearch))')
 if start>=0 and end>start: s=s[:start]+"doctorRows.filter(d=>(d.name+' '+d.specialty).includes(doctorSearch))"+s[end:]
+needle='<h1>دليل الأطباء والعيادات</h1><div className="search">'
+notice='<h1>دليل الأطباء والعيادات</h1><p className="muted">هذا الدليل لتسهيل الوصول إلى مقدمي الخدمة فقط، ولا يقدم التطبيق تشخيصًا أو علاجًا طبيًا. استشر طبيبًا مؤهلًا للحصول على المشورة الطبية.</p><div className="search">'
+if needle in s:
+    s=s.replace(needle,notice,1)
+elif notice not in s:
+    raise SystemExit('doctor directory disclaimer insertion point missing')
 s=s.replace('[driverOnline,setDriverOnline]=useState(true)', '[driverOnline,setDriverOnline]=useState(false)')
 s=s.replace('setDriverVerified(false);setCurrentUserId(null);return;', 'setDriverVerified(false);setDriverOnline(false);setCurrentUserId(null);return;')
 helper=" const toggleDriverAvailability=async()=>{if(supabase){if(!driverVerified||!currentUserId){notify('حساب المندوب غير موثق بعد');return;}const {data,error}=await supabase.from('courier_profiles').update({is_available:!driverOnline}).eq('user_id',currentUserId).select('user_id').maybeSingle();if(error||!data){notify(error?.message||'تعذر تحديث حالة التوفر');return;}}setDriverOnline(v=>!v);};\n"
@@ -25,6 +31,12 @@ print('Applied final type, doctor directory, OTP address refresh and courier ava
 test_path=Path('tests/source-smoke.test.cjs')
 if test_path.exists():
     t=test_path.read_text()
+    if 'health directory includes a medical advice disclaimer' not in t:
+        t += """
+test('health directory includes a medical advice disclaimer', () => {
+  assert.ok(app().includes('استشر طبيبًا مؤهلًا للحصول على المشورة الطبية'));
+});
+"""
     if 'clinic directory, courier availability and address refresh' not in t:
         t += """
 test('clinic directory, courier availability and address refresh', () => {
