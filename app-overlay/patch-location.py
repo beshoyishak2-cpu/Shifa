@@ -24,18 +24,6 @@ s=s.replace("[o.delivery_area,o.delivery_street,o.delivery_landmark].filter(Bool
 s=s.replace("o.delivery_map_url||((o.delivery_latitude!=null&&o.delivery_longitude!=null)?`https://www.google.com/maps?q=${o.delivery_latitude},${o.delivery_longitude}`:undefined)", "(o.delivery_latitude!=null&&o.delivery_longitude!=null)?`https://www.openstreetmap.org/?mlat=${o.delivery_latitude}&mlon=${o.delivery_longitude}#map=18/${o.delivery_latitude}/${o.delivery_longitude}`:undefined",1)
 s=s.replace("${address.area} – ${address.street} – ${address.landmark}", "${address.area} – ${address.street} – ${address.landmark} – ${address.unit||''}",1)
 
-# Ensure the courier receives the immutable unit/building details saved with the order.
-replace_once(
- "delivery_area,delivery_street,delivery_landmark,delivery_latitude,delivery_longitude,delivery_map_url,customer_name",
- "delivery_area,delivery_street,delivery_landmark,delivery_unit_details,delivery_latitude,delivery_longitude,delivery_map_url,customer_name",
- "courier order details select"
-)
-replace_once(
- "address:[o.delivery_area,o.delivery_street,o.delivery_landmark].filter(Boolean).join(' – '),deliveryMapUrl:o.delivery_map_url||((o.delivery_latitude!=null&&o.delivery_longitude!=null)?`https://www.google.com/maps?q=${o.delivery_latitude},${o.delivery_longitude}`:undefined)",
- "address:[o.delivery_area,o.delivery_street,o.delivery_landmark,o.delivery_unit_details].filter(Boolean).join(' – '),deliveryMapUrl:(o.delivery_latitude!=null&&o.delivery_longitude!=null)?`https://www.openstreetmap.org/?mlat=${o.delivery_latitude}&mlon=${o.delivery_longitude}#map=18/${o.delivery_latitude}/${o.delivery_longitude}`:undefined",
- "courier address snapshot and OSM link"
-)
-
 if "saree3:address-selected" not in s:
     listener=" useEffect(()=>{const syncAddress=(event?:Event)=>{let selected=(event as CustomEvent|undefined)?.detail;try{if(!selected){const raw=localStorage.getItem('saree3:selected-address');if(raw)selected=JSON.parse(raw)}}catch{}if(!selected)return;setAddress({name:selected.label||'المنزل',area:selected.area||'',street:selected.street||'',landmark:selected.landmark||'',unit:selected.unit||'',lat:selected.lat??null,lng:selected.lng??null});};syncAddress();window.addEventListener('saree3:address-selected',syncAddress);return()=>window.removeEventListener('saree3:address-selected',syncAddress);},[]);\n"
     anchor=" useEffect(()=>save('cart',cart),[cart]);"
