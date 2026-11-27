@@ -105,7 +105,7 @@ function SareeOperationsPanel() {
   async function reviewApplication(id: string, approve: boolean) {
     if (!db) return;
     const reason = approve ? null : (window.prompt('اكتب سبب الرفض') || '');
-    if (!approve && reason.trim().length < 3) throw new Error('سبب الرفض مطلوب');
+    if (!approve && (reason || '').trim().length < 3) throw new Error('سبب الرفض مطلوب');
     const { error } = await db.rpc('saree_admin_review_partner_application', { p_application_id: id, p_approve: approve, p_reason: reason });
     if (error) throw error; await load(); say(approve ? 'تم قبول الطلب وتفعيل الحساب.' : 'تم رفض الطلب وتسجيل السبب.');
   }
