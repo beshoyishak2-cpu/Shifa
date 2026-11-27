@@ -19,6 +19,8 @@ jobs:
           test -f /tmp/shifa-src/Shifa/package.json
           cp -a /tmp/shifa-src/Shifa/. .
           python3 app-overlay/patch-ui.py
+          cp app-overlay/LocationSystem.tsx src/LocationSystem.tsx
+          python3 app-overlay/patch-location.py
       - name: Configure Supabase client for app build
         run: |
           cat > .env.production <<'EOF'
@@ -54,7 +56,7 @@ jobs:
           npx cap sync ios
       - name: Build iOS Simulator app
         run: |
-          xcodebuild -project ios/App/App.xcodeproj \
+          xcodebuild -workspace ios/App/App.xcworkspace \
             -scheme App \
             -sdk iphonesimulator \
             -configuration Debug \
