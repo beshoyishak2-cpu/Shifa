@@ -47,8 +47,8 @@ jobs:
           python3 app-overlay/patch-private-trip-map.py
           python3 app-overlay/patch-mobile-bottom-nav.py
           python3 app-overlay/patch-polish.py
-          python3 app-overlay/patch-web-customer-fixes.py
           SAREE_FINAL_PATCH=1 python3 app-overlay/patch-location.py # finalize courier address handoff
+          python3 app-overlay/patch-web-customer-fixes.py
       - name: Preserve patched source for integration review
         uses: actions/upload-artifact@v4
         with:
