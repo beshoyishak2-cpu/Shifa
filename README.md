@@ -4,9 +4,9 @@ Arabic RTL local-services and delivery app for Mallawi and nearby villages. Buil
 
 ## Live backend status
 
-The connected Supabase project is active and migrations through **022** have been applied.
+The connected Supabase project is active. The live database currently reports **31 applied migrations**, including the merchant-status RPC security hardening.
 
-The operational backend now includes:
+The operational backend includes:
 - Partner applications for merchants and couriers, private document uploads, admin approval/rejection and account activation.
 - Private wallet/Instapay payment receipts, admin verification, payment feature flags and configurable transfer phone.
 - Wallet account balances and an append-only transaction ledger with server-side credit/debit operations.
@@ -15,8 +15,9 @@ The operational backend now includes:
 - A scheduled pg_cron job that checks overdue/max-debt couriers every minute and applies settlement locks; locked couriers are removed from dispatch and become available again after admin confirms settlement.
 - A courier is paused while a submitted settlement receipt awaits admin review.
 - RLS enabled on all public tables; operational tables are subscribed to Supabase Realtime.
+- Merchant open/closed status is exposed through a SECURITY INVOKER public RPC wrapper; its privileged implementation is kept in the non-exposed private schema.
 
-The new SareeOperationsPanel is mounted by the Android build workflow and provides customer partner/payment actions, courier dispatch/settlement actions and admin review/settings screens.
+The SareeOperationsPanel is mounted by the Android build workflow and provides customer partner/payment actions, courier dispatch/settlement actions and admin review/settings screens.
 
 ## Important launch limitations
 
@@ -25,16 +26,18 @@ A successful build proves compilation and packaging only. It does not prove the 
 - Test checkout/payment receipt submission, rejected-receipt retry, wallet partial/full payment, dispatch races, courier cancellations, delivery commissions and settlement unlock.
 - Verify every Storage bucket policy and private signed-file access.
 - Confirm local address coverage, map accuracy, prescription review by licensed pharmacists and the pharmacy voice-note workflow.
-- Keep the agreed phone/password login without SMS OTP. Because the current phone number is mapped to an internal non-deliverable email identity, it does not prove phone ownership; document this limitation and manually verify partner/courier contact details before activation. Configure push notifications, monitoring, backups, privacy/terms and customer support.
-- Complete physical-device testing on Android and iOS. The iOS workflow currently produces a Simulator build, not a signed installable IPA.
+- Keep the agreed phone/password login without SMS OTP only if the phone-ownership limitation is accepted. Egyptian phone numbers are mapped to internal non-deliverable email identities, so this does not prove phone ownership; manually verify partner/courier contact details before activation.
+- Enable leaked-password protection in Supabase Auth settings.
+- Configure and test push notifications, monitoring, backups, privacy/terms and customer support.
+- Complete physical-device testing on Android and iOS. The current iOS workflow produces a Simulator build, not a signed installable IPA.
 
-Phone/password login currently maps Egyptian phone numbers to an internal non-deliverable email identity. It does not prove phone ownership and is not a substitute for production OTP verification. The UI enforces a minimum of 8 password characters; leaked-password protection still needs to be enabled in Supabase Auth settings before launch.
+Phone/password login currently maps Egyptian phone numbers to an internal non-deliverable email identity. It does not prove phone ownership and is not a substitute for production OTP verification. The UI enforces a minimum of 8 password characters.
 
 ## Supabase
 
 Project URL: https://qfweejmqooojsedsypen.supabase.co
 
-For a fresh environment, apply every SQL file in supabase/migrations/ in filename order. The connected project currently has 22 applied migrations. Never expose a Supabase service-role or secret key in the mobile app or public repository; the app uses a publishable key and relies on RLS and server-side RPC authorization.
+For a fresh environment, apply every SQL file in supabase/migrations/ in filename order. The connected project currently reports 31 applied migrations. Never expose a Supabase service-role or secret key in the mobile app or public repository; the app uses a publishable key and relies on RLS and server-side RPC authorization.
 
 ## Local development
 
@@ -49,7 +52,7 @@ npm run build
 
 ## Android and iOS
 
-GitHub Actions builds the Android Debug APK. The Android workflow upgrades its Capacitor packages to v8 (Android 16 / API 36), assigns a unique versionCode, and can produce a signed Release APK plus Google Play AAB once the permanent Android upload keystore is stored as GitHub Actions secrets. The iOS workflow currently builds an iOS Simulator app; a signed IPA requires Apple Developer certificates and provisioning profiles.
+GitHub Actions currently produces an Android Debug APK. The latest verified Android workflow passed tests, TypeScript checks, Vite build, Capacitor sync and APK packaging. The workflow can produce a signed Release APK plus Google Play AAB once the permanent Android upload keystore is stored as GitHub Actions secrets. The iOS workflow currently builds an iOS Simulator app; a signed IPA requires Apple Developer certificates and provisioning profiles. Simulator success is not a physical-device distribution build.
 
 ## Operational defaults
 
