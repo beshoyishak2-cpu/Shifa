@@ -59,3 +59,25 @@ s=s.replace('<select value={role} onChange={e=>chooseRole(e.target.value as Role
 s=s.replace("const chooseRole=(r:Role)=>{setRole(r);", "const chooseRole=(r:Role)=>{if(signedInPhone&&supabase){notify('نوع الحساب يحدده حسابك المعتمد لدى الإدارة');return;}setRole(r);")
 p.write_text(s)
 print('Operational features wired to Supabase.')
+
+test_path=Path('tests/source-smoke.test.cjs')
+if test_path.exists():
+    test_content=test_path.read_text()
+    if 'errands, private prescriptions and verified clinic directory' not in test_content:
+        test_content += """
+test('errands, private prescriptions and verified clinic directory', () => {
+  const app = fs.readFileSync(path.join(root, 'src/App.tsx'), 'utf8');
+  const location = fs.readFileSync(path.join(root, 'src/LocationSystem.tsx'), 'utf8');
+  const errandMigration = fs.readFileSync(path.join(root, 'supabase/migrations/202611270008_errand_workflow_and_pharmacist_review.sql'), 'utf8');
+  const directoryMigration = fs.readFileSync(path.join(root, 'supabase/migrations/202611270011_medical_directory_and_prescription_privacy.sql'), 'utf8');
+  assert.ok(app.includes("rpc('create_shifa_errand'"));
+  assert.ok(app.includes("rpc('claim_shifa_errand'"));
+  assert.ok(app.includes("rpc('transition_shifa_errand'"));
+  assert.ok(app.includes("storage.from('prescriptions').upload"));
+  assert.ok(app.includes("from('medical_providers')"));
+  assert.ok(location.includes('saree3:auth-changed'));
+  assert.ok(errandMigration.includes('claim_shifa_errand'));
+  assert.ok(directoryMigration.includes('medical_providers'));
+});
+"""
+        test_path.write_text(test_content)
