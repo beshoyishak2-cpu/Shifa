@@ -16,7 +16,7 @@ if old_state in s:
 elif "[tab,setTabState]=useState('home')" not in s:
     raise SystemExit('Tab state anchor missing')
 
-anchor = " const notify=(s:string)=>{setToast(s);window.setTimeout(()=>setToast(''),3000)};"
+anchor = " const notify=(s:string)=>{if(sareeToastTimer!==undefined)window.clearTimeout(sareeToastTimer);setToast(s);sareeToastTimer=window.setTimeout(()=>{setToast('');sareeToastTimer=undefined},3500)};"
 logic = """
  const setTab=(next:string)=>{if(next===tab)return;setTabHistory(prev=>[...prev,tab]);setTabState(next);};
  const goBack=()=>{if(modal){setModal('');return;}if(selectedStore){setSelectedStore(null);return;}if(tabHistory.length){setTabState(tabHistory[tabHistory.length-1]);setTabHistory(prev=>prev.slice(0,-1));return;}const home=role==='customer'?'home':'overview';if(tab!==home){setTabState(home);return;}};
