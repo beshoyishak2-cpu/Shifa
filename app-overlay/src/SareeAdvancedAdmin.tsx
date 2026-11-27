@@ -37,7 +37,8 @@ function AdvancedAdmin(){
   if(!zone.merchant_id&&m.data?.length)setZone(v=>({...v,merchant_id:m.data![0].id}));
   if(!alt.product_id&&p.data?.length)setAlt(v=>({...v,product_id:p.data![0].id,alternative_product_id:p.data!.find(q=>q.id!==p.data![0].id)?.id||'',merchant_id:p.data![0].merchant_id}));
  }
- useEffect(()=>{if(!client)return;client.auth.getSession().then(async({data})=>{const id=data.session?.user.id||null;setUser(id);if(id){const r=await client.from('profiles').select('role').eq('id',id).maybeSingle();setAdmin(r.data?.role==='admin');}});const {data:l}=client.auth.onAuthStateChange(async(_e,s)=>{const id=s?.user.id||null;setUser(id);if(id){const r=await client.from('profiles').select('role').eq('id',id).maybeSingle();setAdmin(r.data?.role==='admin');}else{setAdmin(false);setCustomerOrders([]);}});return()=>l.subscription.unsubscribe();},[]);
+ useEffect(()=>{if(!client)return;client.auth.getSession().then(({data})=>setUser(data.session?.user.id||null));const {data:l}=client.auth.onAuthStateChange((_e,s)=>setUser(s?.user.id||null));return()=>l.subscription.unsubscribe();},[]);
+ useEffect(()=>{if(!client||!user){setAdmin(false);setCustomerOrders([]);return;}let cancelled=false;client.from('profiles').select('role').eq('id',user).maybeSingle().then(({data})=>{if(!cancelled)setAdmin(data?.role==='admin');});return()=>{cancelled=true;};},[user]);
  useEffect(()=>{if(admin&&user)void load();},[admin,user]);
  useEffect(()=>{if(!client||!user)return;let cancelled=false;client.from('orders').select('id,total,status,created_at').eq('customer_id',user).eq('status','delivered').order('created_at',{ascending:false}).limit(30).then(({data})=>{if(cancelled)return;const rows=data||[];setCustomerOrders(rows);if(rows.length)setRefundForm(v=>({...v,order_id:rows[0].id,amount:String(rows[0].total)}));});return()=>{cancelled=true;};},[user]);
  async function submitRefund(){
