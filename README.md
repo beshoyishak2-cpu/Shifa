@@ -4,7 +4,7 @@ Arabic RTL local-services and delivery app for Mallawi and nearby villages. Buil
 
 ## Live backend status
 
-The connected Supabase project is active. The live database currently reports **31 applied migrations**, including the merchant-status RPC security hardening.
+The connected Supabase project is active. The live database currently reports **43 applied migrations**, including the merchant-status RPC security hardening.
 
 The operational backend includes:
 - Partner applications for merchants and couriers, private document uploads, admin approval/rejection and account activation.
@@ -18,6 +18,10 @@ The operational backend includes:
 - Merchant open/closed status is exposed through a SECURITY INVOKER public RPC wrapper; its privileged implementation is kept in the non-exposed private schema.
 
 The SareeOperationsPanel is mounted by the Android build workflow and provides customer partner/payment actions, courier dispatch/settlement actions and admin review/settings screens.
+
+## Verified live data snapshot — 2026-11-27
+
+The connected database currently contains 6 categories, 1 profile, 1 merchant, 1 product, 1 saved address, and 1 errand request. It currently has 0 orders, 0 private trips, 0 partner applications, 0 support tickets, and 0 user notifications. These counts are a snapshot, not proof of end-to-end operational readiness; the existing merchant/product and test records must be reviewed before public launch.
 
 ## Important launch limitations
 
@@ -37,7 +41,7 @@ Phone/password login currently maps Egyptian phone numbers to an internal non-de
 
 Project URL: https://qfweejmqooojsedsypen.supabase.co
 
-For a fresh environment, apply every SQL file in supabase/migrations/ in filename order. The connected project currently reports 31 applied migrations. Never expose a Supabase service-role or secret key in the mobile app or public repository; the app uses a publishable key and relies on RLS and server-side RPC authorization.
+For a fresh environment, apply every SQL file in supabase/migrations/ in filename order. The connected project currently reports 43 applied migrations. Never expose a Supabase service-role or secret key in the mobile app or public repository; the app uses a publishable key and relies on RLS and server-side RPC authorization.
 
 ## Local development
 
