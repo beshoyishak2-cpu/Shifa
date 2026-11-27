@@ -28,12 +28,44 @@ def contain(src,size,fraction=1.0):
     out=Image.new("RGBA",size,(0,0,0,0)); im=src.copy()
     im.thumbnail((max(1,round(size[0]*fraction)),max(1,round(size[1]*fraction))),Image.Resampling.LANCZOS)
     out.alpha_composite(im,((size[0]-im.width)//2,(size[1]-im.height)//2)); return out
+def isolate_foreground(icon):
+    """Remove edge-connected green background while preserving enclosed green artwork."""
+    from collections import deque
+    from PIL import ImageChops
+    rgb=icon.convert("RGB"); pixels=rgb.load(); width,height=rgb.size
+    seen=bytearray(width*height); queue=deque()
+    def is_bg(x,y):
+        r,g,b=pixels[x,y]
+        return g>r*1.12 and g>b*1.12 and g-r>28 and g-b>22
+    def add(x,y):
+        i=y*width+x
+        if not seen[i] and is_bg(x,y):
+            seen[i]=1; queue.append((x,y))
+    for x in range(width): add(x,0); add(x,height-1)
+    for y in range(height): add(0,y); add(width-1,y)
+    while queue:
+        x,y=queue.popleft()
+        if x: add(x-1,y)
+        if x+1<width: add(x+1,y)
+        if y: add(x,y-1)
+        if y+1<height: add(x,y+1)
+    mask=Image.new("L",(width,height),255); mp=mask.load()
+    for y in range(height):
+        row=y*width
+        for x in range(width):
+            if seen[row+x]: mp[x,y]=0
+    out=icon.copy()
+    out.putalpha(ImageChops.multiply(out.getchannel("A"),mask))
+    if out.getbbox() is None: raise SystemExit("Could not isolate scooter artwork from green icon background.")
+    return out
+
 def generate_android(icon,bg,white):
     res=ROOT/"android/app/src/main/res"
     for density,px in {"mdpi":48,"hdpi":72,"xhdpi":96,"xxhdpi":144,"xxxhdpi":192}.items():
         save(icon.resize((px,px),Image.Resampling.LANCZOS),res/f"mipmap-{density}/ic_launcher.png")
+    foreground_art=isolate_foreground(icon)
     for density,px in {"mdpi":108,"hdpi":162,"xhdpi":216,"xxhdpi":324,"xxxhdpi":432}.items():
-        save(contain(icon,(px,px),.66),res/f"mipmap-{density}/ic_launcher_foreground.png")
+        save(contain(foreground_art,(px,px),.66),res/f"mipmap-{density}/ic_launcher_foreground.png")
     p=res/"mipmap-anydpi-v26"; p.mkdir(parents=True,exist_ok=True)
     (p/"ic_launcher.xml").write_text('<?xml version="1.0" encoding="utf-8"?>\n<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n    <background android:drawable="@color/ic_launcher_background" />\n    <foreground android:drawable="@mipmap/ic_launcher_foreground" />\n</adaptive-icon>\n',encoding="utf-8")
     p=res/"values"; p.mkdir(parents=True,exist_ok=True)
