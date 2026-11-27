@@ -41,6 +41,17 @@ p=Path('src/App.tsx')
 s=p.read_text()
 s=s.replace("import { requestPhoneOtp, verifyPhoneOtp } from './lib/backend';", "import { registerWithPhone, loginWithPhone } from './lib/backend';")
 s=s.replace("[authPhone,setAuthPhone]=useState(''),[authCode,setAuthCode]=useState(''),[otpSent,setOtpSent]=useState(false),[signedInPhone,setSignedInPhone]=useState<string|null>(null);", "[authPhone,setAuthPhone]=useState(''),[authPassword,setAuthPassword]=useState(''),[authName,setAuthName]=useState(''),[authMode,setAuthMode]=useState<'login'|'register'>('login'),[signedInPhone,setSignedInPhone]=useState<string|null>(null);")
+
+# Ensure the new password-auth state is declared inside the root React component.
+# The source archive's state declaration formatting can vary between releases.
+if 'const [authPassword,setAuthPassword]' not in s:
+    import re
+    component = re.search(r'((?:export\\s+default\\s+)?function\\s+App\\s*\\([^)]*\\)\\s*\\{|(?:export\\s+)?const\\s+App\\s*=\\s*\\([^)]*\\)\\s*=>\\s*\\{)', s)
+    if not component:
+        raise SystemExit('Could not locate root App component to add phone/password state')
+    state = "\\n  const [authPassword,setAuthPassword]=useState('');\\n  const [authName,setAuthName]=useState('');\\n  const [authMode,setAuthMode]=useState<'login'|'register'>('login');\\n"
+    s = s[:component.end()] + state + s[component.end():]
+
 old=""" const sendOtp=async()=>{try{await requestPhoneOtp(authPhone);setOtpSent(true);notify('تم إرسال رمز التحقق إلى هاتفك');}catch(e){notify(e instanceof Error?e.message:'تعذر إرسال رمز التحقق');}};
  const confirmOtp=async()=>{try{await verifyPhoneOtp(authPhone,authCode);window.dispatchEvent(new Event('saree3:auth-changed'));setModal('');notify('تم تسجيل الدخول بنجاح');}catch(e){notify(e instanceof Error?e.message:'رمز التحقق غير صحيح');}};"""
 new=""" const submitPhoneAuth=async()=>{
