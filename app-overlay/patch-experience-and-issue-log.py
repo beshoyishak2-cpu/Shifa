@@ -157,11 +157,11 @@ hero_svg="""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 460" role="
 <path d="M356 365h164" stroke="#6fcb00" stroke-width="10" stroke-linecap="round"/>
 </svg>"""
 (brand_dir/"saree-hero-illustration.svg").write_text(hero_svg,encoding="utf-8")
-hero_art=re.compile(r'<div className="hero-art" aria-hidden="true"><svg[\\s\\S]*?</svg></div>')
+hero_art=re.compile(r'<div className="hero-art" aria-hidden="true"><svg[\s\S]*?</svg></div>')
 s,n=hero_art.subn('<div className="hero-art"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>',s,count=1)
 if n!=1: raise SystemExit("Could not replace home hero artwork with the approved-style SVG")
 # Keep the approved hero as the first focal card; remove the older duplicate promo/repeat strips.
-s=re.sub(r'<div className="saree-home-promo">[\\s\\S]*?</div>\\s*<div className="saree-repeat-row">[\\s\\S]*?</div>\\s*','',s,count=1)
+s=re.sub(r'<div className="saree-home-promo">[\s\S]*?</div>\s*<div className="saree-repeat-row">[\s\S]*?</div>\s*','',s,count=1)
 
 p.write_text(s,encoding="utf-8")
 if 'SAREE3 pixel-faithful visual foundation' not in css:
