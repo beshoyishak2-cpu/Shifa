@@ -8,6 +8,7 @@ on:
       - 'app-overlay/**'
       - 'supabase/migrations/**'
       - 'capacitor.config.ts'
+      - 'index.html'
       - '.github/workflows/mobile-build.yml'
 jobs:
   android-debug:
