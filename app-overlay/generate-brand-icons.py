@@ -70,7 +70,7 @@ def generate_android(icon,bg,white):
     (p/"ic_launcher.xml").write_text('<?xml version="1.0" encoding="utf-8"?>\n<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n    <background android:drawable="@color/ic_launcher_background" />\n    <foreground android:drawable="@mipmap/ic_launcher_foreground" />\n</adaptive-icon>\n',encoding="utf-8")
     p=res/"values"; p.mkdir(parents=True,exist_ok=True)
     (p/"ic_launcher_background.xml").write_text('<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">'+bg+'</color>\n</resources>\n',encoding="utf-8")
-    splash=Image.new("RGBA",(2732,2732),bg); splash.alpha_composite(contain(white,(2732,2732),.45))
+    splash=Image.new("RGBA",(2732,2732),bg); splash.alpha_composite(contain(white,(2732,2732),.62))
     save(splash,res/"drawable/splash.png")
 def generate_ios(icon,bg,white):
     assets=ROOT/"ios/App/App/Assets.xcassets"; appicon=assets/"AppIcon.appiconset"; appicon.mkdir(parents=True,exist_ok=True)
@@ -82,7 +82,7 @@ def generate_ios(icon,bg,white):
         images.append({"filename":filename,"idiom":"universal","platform":"ios","size":logical,"scale":scale})
     (appicon/"Contents.json").write_text(json.dumps({"images":images,"info":{"author":"xcode","version":1}},indent=2)+"\n",encoding="utf-8")
     splashset=assets/"Splash.imageset"; splashset.mkdir(parents=True,exist_ok=True)
-    splash=Image.new("RGBA",(2732,2732),bg); splash.alpha_composite(contain(white,(2732,2732),.45))
+    splash=Image.new("RGBA",(2732,2732),bg); splash.alpha_composite(contain(white,(2732,2732),.62))
     save(splash,splashset/"splash.png")
     (splashset/"Contents.json").write_text(json.dumps({"images":[{"filename":"splash.png","idiom":"universal"}],"info":{"author":"xcode","version":1}},indent=2)+"\n",encoding="utf-8")
 icon=load_png(ICON); white=load_png(WHITE); load_png(GREEN)
