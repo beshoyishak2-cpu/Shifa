@@ -27,10 +27,10 @@ if "const goBack=()=>{" not in s:
     s = s.replace(anchor, anchor + logic, 1)
 
 old_header = '<header><button className="icon-btn" aria-label="فتح القائمة" onClick={()=>setModal(\'menu\')}><Menu/></button>'
-new_header = '<header><button className="icon-btn" aria-label={tabHistory.length||selectedStore||tab!==(role===\'customer\'?\'home\':\'overview\')?"رجوع":"فتح القائمة"} onClick={()=>{if(tabHistory.length||selectedStore||tab!==(role===\'customer\'?\'home\':\'overview\'))goBack();else setModal(\'menu\')}}>{tabHistory.length||selectedStore||tab!==(role===\'customer\'?\'home\':\'overview\')?<ArrowLeft/>:<Menu/>}</button>'
+new_header = '<header>{tabHistory.length||selectedStore||tab!==(role===\'customer\'?\'home\':\'overview\')?<button className="icon-btn" aria-label="رجوع" onClick={goBack}><ArrowLeft/></button>:null}<button className="icon-btn" aria-label="فتح القائمة" onClick={()=>setModal(\'menu\')}><Menu/></button>'
 if old_header in s:
     s = s.replace(old_header, new_header, 1)
-elif 'aria-label={tabHistory.length' not in s:
+elif 'aria-label="رجوع" onClick={goBack}' not in s:
     raise SystemExit('Header navigation anchor missing')
 
 p.write_text(s)
