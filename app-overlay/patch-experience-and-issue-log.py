@@ -163,6 +163,14 @@ if n!=1: raise SystemExit("Could not replace home hero artwork with the approved
 # Keep the approved hero as the first focal card; remove the older duplicate promo/repeat strips.
 s=re.sub(r'<div className="saree-home-promo">[\s\S]*?</div>\s*<div className="saree-repeat-row">[\s\S]*?</div>\s*','',s,count=1)
 
+
+# Update the source smoke assertion to follow the approved SVG asset instead of the old inline placeholder.
+test_file=Path("tests/source-smoke.test.cjs")
+if test_file.exists():
+ t=test_file.read_text(encoding="utf-8")
+ t=t.replace("assert.ok(source.includes('className=\\\"hero-art\\\" aria-hidden=\\\"true\\\"><svg viewBox=\\\"0 0 160 160\\\"'))","assert.ok(source.includes('src=\\\"/brand/saree-hero-illustration.svg\\\"'))")
+ test_file.write_text(t,encoding="utf-8")
+
 p.write_text(s,encoding="utf-8")
 if 'SAREE3 pixel-faithful visual foundation' not in css:
  css += """
