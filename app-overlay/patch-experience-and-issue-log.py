@@ -124,5 +124,7 @@ button.primary,.primary,.add,.cart-btn{background:#6FCB00!important;border-color
 @media(prefers-reduced-motion:no-preference){button{transition:transform .18s ease}button:active{transform:scale(.97)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 """
+ css=css.replace("@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap');","")
+ css="@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap');\\n"+css
  c.write_text(css,encoding="utf-8")
 print("Issue log, WebP merchant/product uploads and visual foundation patched.")
