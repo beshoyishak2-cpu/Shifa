@@ -252,10 +252,10 @@ function SareeOperationsPanel() {
   const styles: Record<string, React.CSSProperties> = {
     shell: { position: 'fixed', zIndex: 2147483001, left: 12, bottom: 'max(88px, calc(env(safe-area-inset-bottom) + 84px))', direction: 'rtl', fontFamily: 'inherit', color: '#183a34' },
     trigger: { border: 0, borderRadius: 999, background: '#087f68', color: '#fff', padding: '12px 17px', fontWeight: 800, boxShadow: '0 7px 24px #052f2750' },
-    panel: { width: 'min(420px, calc(100vw - 24px))', maxHeight: 'min(78dvh, 720px)', overflow: 'auto', background: '#fff', border: '1px solid #d8e8e2', borderRadius: 18, boxShadow: '0 14px 48px #052f2740' },
-    top: { background: '#eaf7f2', padding: '13px 15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 2 },
-    body: { padding: 14, display: 'grid', gap: 10 },
-    card: { border: '1px solid #e0ece7', borderRadius: 12, padding: 11, display: 'grid', gap: 7, background: '#fbfefd' },
+    panel: { width: 'min(470px, calc(100vw - 20px))', maxHeight: 'min(84dvh, 780px)', overflow: 'auto', background: '#f6faf8', border: '1px solid #d8e8e2', borderRadius: 22, boxShadow: '0 18px 56px #052f2738' },
+    top: { background: 'linear-gradient(135deg,#075e50,#0b8b70)', color: '#fff', padding: '16px 17px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 2, boxShadow: '0 4px 16px #073e3420' },
+    body: { padding: 13, display: 'grid', gap: 13 },
+    card: { border: '1px solid #e1ebe6', borderRadius: 16, padding: 14, display: 'grid', gap: 9, background: '#fff', boxShadow: '0 3px 12px #123c2d08' },
     button: { border: 0, borderRadius: 9, padding: '9px 11px', background: '#087f68', color: '#fff', fontWeight: 700 },
     muted: { color: '#668079', fontSize: 12 },
     input: { width: '100%', boxSizing: 'border-box', padding: 10, border: '1px solid #cddfd8', borderRadius: 9, background: '#fff', color: '#173b33', font: 'inherit' },
@@ -284,7 +284,33 @@ function SareeOperationsPanel() {
           {btn('إرسال طلب الانضمام', () => void run(submitPartner))}
         </div>}
         {role === 'admin' && tab === 'customers' && <><b>إدارة العملاء ({adminCustomers.length})</b>{adminCustomers.map(c => <article style={styles.card} key={c.id}><b>{c.full_name || 'عميل بدون اسم'}</b><span>{c.phone || 'لا يوجد هاتف'}</span><span style={styles.muted}>رقم الحساب: {c.id}</span><span>رصيد المحفظة: {money(adminWallets.find(w=>w.customer_id===c.id)?.balance || 0)}</span></article>)}</>}
-        {role === 'admin' && tab === 'drivers' && <><b>إدارة المندوبين ({adminDrivers.length})</b>{adminDrivers.map(d => <article style={styles.card} key={d.id}><b>{d.full_name || 'مندوب بدون اسم'}</b><span>{d.phone || 'لا يوجد هاتف'} · {d.courier?.vehicle_type || 'المركبة غير محددة'}</span><span>التوثيق: {d.courier?.is_verified ? 'موثق' : 'غير موثق'} · التوفر: {d.courier?.is_available ? 'متاح' : 'غير متاح'} · التوريد: {d.courier?.locked_for_settlement ? 'موقوف' : 'طبيعي'}</span>{btn(d.courier?.is_verified ? 'إلغاء التوثيق' : 'توثيق المندوب', () => void run(() => setCourierVerified(d.id,!d.courier?.is_verified)), !d.courier?.is_verified)}</article>)}</>}
+        {role === 'admin' && tab === 'drivers' && <section style={{display:'grid',gap:12}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}>
+            <div><b style={{fontSize:18}}>إدارة المندوبين</b><div style={styles.muted}>متابعة الحسابات والتوثيق وحالة استقبال الطلبات</div></div>
+            <span style={{background:'#e3f3ed',color:'#12634f',borderRadius:999,padding:'6px 11px',fontWeight:800,fontSize:12}}>{adminDrivers.length} مندوب</span>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:7}}>
+            <div style={{...styles.card,textAlign:'center',padding:10}}><strong style={{fontSize:22,color:'#087f68'}}>{adminDrivers.length}</strong><span style={styles.muted}>الإجمالي</span></div>
+            <div style={{...styles.card,textAlign:'center',padding:10}}><strong style={{fontSize:22,color:'#087f68'}}>{adminDrivers.filter(d=>d.courier?.is_verified).length}</strong><span style={styles.muted}>موثقون</span></div>
+            <div style={{...styles.card,textAlign:'center',padding:10}}><strong style={{fontSize:22,color:'#b7791f'}}>{adminDrivers.filter(d=>!d.courier?.is_verified).length}</strong><span style={styles.muted}>بانتظار التوثيق</span></div>
+          </div>
+          {adminDrivers.length===0 ? <div style={{...styles.card,textAlign:'center',padding:22}}>
+            <div style={{fontSize:34}}>🛵</div><b>لا يوجد مندوبون مسجلون حتى الآن</b>
+            <span style={styles.muted}>عند إرسال طلب انضمام كمندوب، سيظهر هنا بعد إنشاء حسابه واعتماده.</span>
+            {btn('عرض طلبات الانضمام',()=>setTab('applications'),true)}
+          </div> : adminDrivers.map(d => <article style={{...styles.card,gap:11}} key={d.id}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <div style={{width:44,height:44,borderRadius:14,background:'#e7f5ef',display:'grid',placeItems:'center',fontSize:23}}>🛵</div>
+              <div style={{display:'grid',gap:3,flex:1,minWidth:0}}><b>{d.full_name || 'مندوب بدون اسم'}</b><span style={styles.muted}>{d.phone || 'رقم الهاتف غير مسجل'} · {d.courier?.vehicle_type==='motorcycle'?'موتوسيكل':d.courier?.vehicle_type==='car'?'سيارة':d.courier?.vehicle_type==='bicycle'?'دراجة':'المركبة غير محددة'}</span></div>
+            </div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              <span style={{background:d.courier?.is_verified?'#e4f5eb':'#fff4df',color:d.courier?.is_verified?'#17633f':'#94600c',borderRadius:999,padding:'5px 9px',fontSize:11,fontWeight:700}}>{d.courier?.is_verified?'✓ موثق':'بانتظار التوثيق'}</span>
+              <span style={{background:d.courier?.is_available?'#e4f5eb':'#f0f2f1',color:d.courier?.is_available?'#17633f':'#68756f',borderRadius:999,padding:'5px 9px',fontSize:11,fontWeight:700}}>{d.courier?.is_available?'متاح للطلبات':'غير متاح'}</span>
+              {d.courier?.locked_for_settlement && <span style={{background:'#fdeaea',color:'#a42b2b',borderRadius:999,padding:'5px 9px',fontSize:11,fontWeight:700}}>موقوف للتوريد</span>}
+            </div>
+            <div style={{borderTop:'1px solid #edf1ee',paddingTop:10}}>{btn(d.courier?.is_verified?'إلغاء توثيق المندوب':'اعتماد وتوثيق المندوب',()=>void run(()=>setCourierVerified(d.id,!d.courier?.is_verified)),!d.courier?.is_verified)}</div>
+          </article>)}
+        </section>}
         {role === 'admin' && tab === 'merchants' && <><b>إدارة التجار والصيدليات ({adminMerchants.length})</b>{adminMerchants.map(m => <article style={styles.card} key={m.id}><b>{m.name}</b><span>{m.phone || 'لا يوجد هاتف'} · {m.address || 'لا يوجد عنوان'}</span><span>رسوم التوصيل: {money(m.delivery_fee)} · العمولة: {m.commission_percent}%</span><span>الحالة: {m.is_active ? 'نشط' : 'متوقف'}</span>{btn(m.is_active ? 'إيقاف المتجر' : 'تفعيل المتجر', () => void run(() => setMerchantActive(m.id,!m.is_active)), !m.is_active)}</article>)}</>}
         {role === 'admin' && tab === 'orders' && <><b>إدارة الطلبات ({adminOrders.length})</b>{adminOrders.map(o => <article style={styles.card} key={o.id}><b>{money(o.total)} · {o.status}</b><span>طلب: {o.id}</span><span>العميل: {o.customer_id} · المتجر: {adminMerchants.find(m=>m.id===o.merchant_id)?.name || o.merchant_id}</span><span>الدفع: {o.payment_status || 'غير محدد'} · {new Date(o.created_at).toLocaleString('ar-EG')}</span><select style={styles.input} defaultValue={o.status} id={'admin-order-'+o.id}><option value='pending'>جديد</option><option value='accepted'>مقبول</option><option value='preparing'>قيد التجهيز</option><option value='ready_for_pickup'>جاهز للاستلام</option><option value='picked_up'>تم الاستلام</option><option value='delivered'>تم التسليم</option><option value='cancelled'>ملغي</option></select>{btn('حفظ حالة الطلب', () => {const el=document.getElementById('admin-order-'+o.id) as HTMLSelectElement;void run(()=>adminChangeOrderStatus(o.id,el.value));})}</article>)}</>}
         {role === 'admin' && tab === 'products' && <><b>إدارة المنتجات ({adminProducts.length})</b>{adminProducts.map(p => <article style={styles.card} key={p.id}><b>{p.name}</b><span>{money(p.price)} · المتجر: {adminMerchants.find(m=>m.id===p.merchant_id)?.name || p.merchant_id}</span><span>الحالة: {p.is_available ? 'متاح' : 'مخفي'}</span>{btn(p.is_available ? 'إخفاء المنتج' : 'إظهار المنتج', () => void run(() => setProductAvailable(p.id,!p.is_available)), !p.is_available)}</article>)}</>}
@@ -314,9 +340,43 @@ function SareeOperationsPanel() {
           {field('ملاحظة / سبب الإضافة', walletCredit.note, v => setWalletCredit(x => ({ ...x, note: v })))}
           {btn('إضافة المبلغ للمحفظة', () => void run(adminCreditWallet))}
         </div>}
-        {role === 'driver' && <><div style={styles.card}><b>المبلغ المستحق للتوريد</b><strong style={{ fontSize: 24 }}>{money(driverAccount?.amount_due)}</strong><span style={styles.muted}>{driverProfile?.locked_for_settlement ? 'حسابك موقوف مؤقتًا لحين التوريد' : driverProfile?.is_verified ? 'حسابك موثق' : 'حسابك ينتظر التوثيق'}</span>{btn(driverProfile?.is_available ? 'إيقاف استقبال الطلبات' : 'متاح لاستقبال الطلبات', () => void run(toggleDriverAvailability), true)}<div style={styles.row}><span>رقم التحويل: {appSettings.transfer_phone}</span>{btn('نسخ الرقم', () => void copyTransferNumber(), true)}</div><label style={{ display: 'grid', gap: 5 }}>إيصال التوريد<input style={styles.input} type="file" accept="image/*" id="saree-settlement-file"/></label>{btn('إرسال إيصال التوريد', () => { const el=document.getElementById('saree-settlement-file') as HTMLInputElement; void run(() => submitSettlement(el.files?.[0])); })}</div>
-          <b>الطلبات المتاحة ({orders.length})</b>{orders.map(o => <article style={styles.card} key={o.id}><b>{money(o.total)} · طلب جاهز للاستلام</b><span>{o.customer_name} · {o.customer_phone}</span><span>{[o.delivery_area,o.delivery_street,o.delivery_landmark,o.delivery_unit_details].filter(Boolean).join(' - ')}</span>{o.delivery_map_url && <a href={o.delivery_map_url} target="_blank" rel="noreferrer">فتح موقع العميل على الخريطة</a>}{btn('قبول الطلب', () => void run(() => acceptOrder(o.id)))}</article>)}
-          <b>الطلبات المسندة إليك</b>{myOrders.map(o => <article style={styles.card} key={o.id}><b>{money(o.total)} · {o.status}</b>{o.status==='ready_for_pickup' && <div style={styles.row}>{btn('استلمت من المتجر', () => void run(() => moveOrder(o.id,'picked_up')))}{btn('اعتذار / إلغاء', () => void run(() => releaseOrder(o.id)), true)}</div>}{o.status==='picked_up' && btn('تم تسليم الطلب', () => void run(() => moveOrder(o.id,'delivered')))}</article>)}</>}
+        {role === 'driver' && <section style={{display:'grid',gap:13}}>
+          <div style={{...styles.card,background:'linear-gradient(135deg,#075e50,#0b8b70)',color:'#fff',border:0,padding:17}}>
+            <span style={{fontSize:12,opacity:.85}}>المبلغ المستحق للتوريد</span>
+            <strong style={{fontSize:30}}>{money(driverAccount?.amount_due)}</strong>
+            <span style={{fontSize:12,opacity:.9}}>{driverProfile?.locked_for_settlement?'الحساب موقوف مؤقتًا لحين تأكيد التوريد':driverProfile?.is_verified?'حسابك موثق وجاهز للعمل':'حسابك ينتظر اعتماد الإدارة'}</span>
+            <button style={{...styles.button,background:'#fff',color:'#075e50',marginTop:4}} disabled={busy||!driverProfile?.is_verified||!!driverProfile?.locked_for_settlement} onClick={()=>void run(toggleDriverAvailability)}>{driverProfile?.is_available?'إيقاف استقبال الطلبات':'تشغيل واستقبال الطلبات'}</button>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            <div style={styles.card}><span style={styles.muted}>طلبات جديدة متاحة</span><strong style={{fontSize:23}}>{orders.length}</strong></div>
+            <div style={styles.card}><span style={styles.muted}>طلبات معك</span><strong style={{fontSize:23}}>{myOrders.length}</strong></div>
+          </div>
+          <section style={{display:'grid',gap:9}}>
+            <div><b style={{fontSize:16}}>الطلبات المتاحة</b><div style={styles.muted}>اقبل الطلب بعد مراجعة العنوان والتفاصيل</div></div>
+            {orders.length===0?<div style={{...styles.card,textAlign:'center',padding:20}}><div style={{fontSize:28}}>📦</div><b>لا توجد طلبات متاحة حاليًا</b><span style={styles.muted}>سنظهر لك الطلبات الجديدة هنا عندما تكون متاحًا ومعتمدًا.</span></div>:orders.map(o=><article style={styles.card} key={o.id}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}><b>طلب جاهز للاستلام</b><strong style={{color:'#087f68'}}>{money(o.total)}</strong></div>
+              <span>{o.customer_name||'العميل'} · {o.customer_phone||'لا يوجد هاتف'}</span>
+              <span style={{fontSize:12,color:'#5d716a'}}>{[o.delivery_area,o.delivery_street,o.delivery_landmark,o.delivery_unit_details].filter(Boolean).join(' - ')||'العنوان غير مكتمل'}</span>
+              {o.delivery_map_url&&<a href={o.delivery_map_url} target="_blank" rel="noreferrer" style={{color:'#087f68',fontWeight:700}}>فتح موقع العميل على الخريطة</a>}
+              {btn('قبول هذا الطلب',()=>void run(()=>acceptOrder(o.id)))}
+            </article>)}
+          </section>
+          <section style={{display:'grid',gap:9}}>
+            <div><b style={{fontSize:16}}>الطلبات المسندة إليك</b><div style={styles.muted}>تابع الطلب حتى تأكيد التسليم</div></div>
+            {myOrders.length===0?<div style={styles.card}><span style={styles.muted}>لا توجد طلبات مسندة إليك حاليًا.</span></div>:myOrders.map(o=><article style={styles.card} key={o.id}>
+              <div style={{display:'flex',justifyContent:'space-between',gap:8,alignItems:'center'}}><b>طلب #{o.id.slice(0,8)}</b><strong style={{color:'#087f68'}}>{money(o.total)}</strong></div>
+              <span style={styles.muted}>{o.status==='ready_for_pickup'?'بانتظار الاستلام من المتجر':o.status==='picked_up'?'معك في الطريق للتسليم':o.status==='delivered'?'تم التسليم':o.status}</span>
+              {o.status==='ready_for_pickup'&&<div style={styles.row}>{btn('استلمت من المتجر',()=>void run(()=>moveOrder(o.id,'picked_up')))}{btn('اعتذار عن الطلب',()=>void run(()=>releaseOrder(o.id)),true)}</div>}
+              {o.status==='picked_up'&&btn('تأكيد تسليم الطلب',()=>void run(()=>moveOrder(o.id,'delivered')))}
+            </article>)}
+          </section>
+          <section style={styles.card}>
+            <b>التوريد اليومي</b><span style={styles.muted}>رقم التحويل: {appSettings.transfer_phone}</span>
+            <div style={styles.row}>{btn('نسخ رقم التحويل',()=>void copyTransferNumber(),true)}</div>
+            <label style={{display:'grid',gap:5,fontSize:12}}>إرفاق صورة إيصال التوريد<input style={styles.input} type="file" accept="image/*" id="saree-settlement-file"/></label>
+            {btn('إرسال إيصال التوريد',()=>{const el=document.getElementById('saree-settlement-file') as HTMLInputElement;void run(()=>submitSettlement(el.files?.[0]));})}
+          </section>
+        </section>}
         {role === 'customer' && tab === 'main' && <><div style={styles.card}><b>رصيد محفظتك</b><strong style={{ fontSize: 24 }}>{money(wallet?.balance)}</strong></div><b>طلباتك التي تنتظر الدفع</b>{myOrders.filter(o => o.status === 'pending' && o.payment_status !== 'paid').map(o => <article style={styles.card} key={o.id}><b>طلب {o.id.slice(0,8)} · {money(o.total)}</b><span>حالة الدفع: {o.payment_status || 'unpaid'}</span><select style={styles.input} value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}><option value="mobile_wallet">محفظة إلكترونية</option><option value="instapay">إنستا باي</option></select><div style={styles.row}><span>حوّل إلى: {appSettings.transfer_phone}</span>{btn('نسخ الرقم', () => void copyTransferNumber(), true)}</div><label style={{ display: 'grid', gap: 4 }}>المبلغ المستخدم من المحفظة<input style={styles.input} type="number" min="0" max={Math.min(Number(wallet?.balance || 0), Number(o.total))} value={walletAmounts[o.id] ?? '0'} onChange={e => setWalletAmounts(v => ({ ...v, [o.id]: e.target.value }))}/></label>{Number(wallet?.balance || 0) > 0 && btn('استخدام رصيد المحفظة', () => void run(() => applyWalletToOrder(o.id)), true)}<label>صورة إيصال التحويل<input style={styles.input} type="file" accept="image/*" id={'pay-'+o.id}/></label>{btn('إرسال الإيصال', () => {const el=document.getElementById('pay-'+o.id) as HTMLInputElement;void run(()=>submitOrderPayment(o.id,el.files?.[0]));})}</article>)}</>}
       </div>
     </section>}
