@@ -60,7 +60,8 @@ if 'const [authPassword,setAuthPassword]' not in s:
                    if 'authPhone' in line and 'useState' in line), None)
     if anchor is None:
         raise SystemExit('Could not locate existing authPhone useState declaration')
-    state = chr(10) + "  const [authPassword,setAuthPassword]=useState('');" + chr(10) + "  const [authName,setAuthName]=useState('');" + chr(10) + "  const [authMode,setAuthMode]=useState<'login'|'register'>('login');" + chr(10)
+    state = chr(10) + "  const [authPassword,setAuthPassword]=useState('');
+  const [showAuthPassword,setShowAuthPassword]=useState(false);" + chr(10) + "  const [authName,setAuthName]=useState('');" + chr(10) + "  const [authMode,setAuthMode]=useState<'login'|'register'>('login');" + chr(10)
     lines.insert(anchor + 1, state)
     s = ''.join(lines)
 
@@ -69,7 +70,7 @@ old=""" const sendOtp=async()=>{try{await requestPhoneOtp(authPhone);setOtpSent(
 new=""" const submitPhoneAuth=async()=>{
   const phone=authPhone.replace(/[\\s()-]/g,'');
   if(!/^01[0125][0-9]{8}$/.test(phone) && !/^\\+?20?1[0125][0-9]{8}$/.test(phone)){notify('اكتب رقم موبايل مصري صحيح');return;}
-  if(authPassword.length<8){notify('كلمة المرور يجب ألا تقل عن 8 أحرف');return;}
+  if(authPassword.length<6){notify('كلمة المرور يجب ألا تقل عن 6 أحرف أو أرقام');return;}
   try{
    if(authMode==='register'){
     if(!authName.trim()){notify('اكتب اسمك');return;}
@@ -86,7 +87,7 @@ new=""" const submitPhoneAuth=async()=>{
 if old not in s: raise SystemExit('OTP handlers block not found')
 s=s.replace(old,new)
 old=""" {modal==='login'&&<div className="overlay" onClick={()=>setModal('')}><div className="dialog" onClick={e=>e.stopPropagation()}><button className="close" onClick={()=>setModal('')}><X/></button><h2>تسجيل الدخول برقم الهاتف</h2><p className="muted">سيصلك رمز تحقق SMS من مشروع سريع المرتبط.</p><label>رقم الهاتف<input inputMode="tel" value={authPhone} onChange={e=>setAuthPhone(e.target.value)} placeholder="+201xxxxxxxxx"/></label>{otpSent&&<label>رمز التحقق<input inputMode="numeric" value={authCode} onChange={e=>setAuthCode(e.target.value)} placeholder="123456"/></label>}<button className="primary full" onClick={otpSent?confirmOtp:sendOtp}>{otpSent?'تأكيد الرمز':'إرسال رمز التحقق'}</button></div></div>}"""
-new=""" {modal==='login'&&<div className="overlay" onClick={()=>setModal('')}><div className="dialog" onClick={e=>e.stopPropagation()}><button className="close" onClick={()=>setModal('')}><X/></button><h2>{authMode==='register'?'إنشاء حساب جديد':'تسجيل الدخول'}</h2><p className="muted">استخدم رقم موبايلك وكلمة المرور. لا نستخدم رسائل SMS أو OTP.</p>{authMode==='register'&&<label>الاسم بالكامل<input value={authName} onChange={e=>setAuthName(e.target.value)} placeholder="اسمك"/></label>}<label>رقم الهاتف<input inputMode="tel" value={authPhone} onChange={e=>setAuthPhone(e.target.value)} placeholder="010xxxxxxxx"/></label><label>كلمة المرور<input type="password" autoComplete={authMode==='register'?'new-password':'current-password'} value={authPassword} onChange={e=>setAuthPassword(e.target.value)} placeholder="8 أحرف على الأقل"/></label><button className="primary full" onClick={submitPhoneAuth}>{authMode==='register'?'إنشاء الحساب':'دخول'}</button><button className="outline full" onClick={()=>setAuthMode(authMode==='register'?'login':'register')}>{authMode==='register'?'لديك حساب؟ سجل الدخول':'مستخدم جديد؟ أنشئ حسابًا'}</button></div></div>}"""
+new=""" {modal==='login'&&<div className="overlay" onClick={()=>setModal('')}><div className="dialog" onClick={e=>e.stopPropagation()}><button className="close" onClick={()=>setModal('')}><X/></button><h2>{authMode==='register'?'إنشاء حساب جديد':'تسجيل الدخول'}</h2><p className="muted">استخدم رقم موبايلك وكلمة المرور. لا نستخدم رسائل SMS أو OTP.</p>{authMode==='register'&&<label>الاسم بالكامل<input value={authName} onChange={e=>setAuthName(e.target.value)} placeholder="اسمك"/></label>}<label>رقم الهاتف<input inputMode="tel" value={authPhone} onChange={e=>setAuthPhone(e.target.value)} placeholder="010xxxxxxxx"/></label><label>كلمة المرور<div style={{display:'flex',gap:8,alignItems:'center'}}><input style={{flex:1}} type={showAuthPassword?'text':'password'} autoComplete={authMode==='register'?'new-password':'current-password'} value={authPassword} onChange={e=>setAuthPassword(e.target.value)} placeholder="6 أحرف أو أرقام على الأقل"/><button type="button" className="outline" onClick={()=>setShowAuthPassword(v=>!v)}>{showAuthPassword?'إخفاء':'إظهار'}</button></div></label><button className="primary full" onClick={submitPhoneAuth}>{authMode==='register'?'إنشاء الحساب':'دخول'}</button><button className="outline full" onClick={()=>setAuthMode(authMode==='register'?'login':'register')}>{authMode==='register'?'لديك حساب؟ سجل الدخول':'مستخدم جديد؟ أنشئ حسابًا'}</button></div></div>}"""
 if old not in s: raise SystemExit('OTP modal block not found')
 s=s.replace(old,new)
 p.write_text(s)
