@@ -6,6 +6,7 @@ on:
     paths:
       - 'Shifa-MVP-Project(2).zip'
       - 'app-overlay/**'
+      - 'supabase/migrations/**'
       - '.github/workflows/mobile-build.yml'
 jobs:
   android-debug:
@@ -32,6 +33,7 @@ jobs:
           python3 /tmp/patch-admin-console.py
           python3 app-overlay/patch-auth.py
           python3 app-overlay/patch-auth-refresh.py
+          python3 app-overlay/patch-saree-ops.py
       - name: Preserve patched source for integration review
         uses: actions/upload-artifact@v4
         with:
