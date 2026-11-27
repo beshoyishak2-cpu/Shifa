@@ -91,6 +91,15 @@ jobs:
           npx cap add ios
           python3 app-overlay/patch-ios-location-usage.py
           npx cap sync ios
+      - name: Configure GitHub authentication for Swift Package Manager
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          # SwiftPM clones Capacitor's public GitHub packages in a separate cache,
+          # outside the checkout's local git credentials. Supply the workflow token
+          # to git so xcodebuild can resolve those dependencies non-interactively.
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --global credential.interactive never
       - name: Build iOS Simulator app
         run: |
           xcodebuild -project ios/App/App.xcodeproj \
