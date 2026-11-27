@@ -4,7 +4,7 @@ Arabic RTL local-services and delivery app for Mallawi and nearby villages. Buil
 
 ## Live backend status
 
-The connected Supabase project is active and migrations **001–021** have been applied.
+The connected Supabase project is active and migrations through **022** have been applied.
 
 The operational backend now includes:
 - Partner applications for merchants and couriers, private document uploads, admin approval/rejection and account activation.
@@ -28,13 +28,13 @@ A successful build proves compilation and packaging only. It does not prove the 
 - Configure production phone verification, push notifications, monitoring, backups, privacy/terms and customer support.
 - Complete physical-device testing on Android and iOS. The iOS workflow currently produces a Simulator build, not a signed installable IPA.
 
-Phone/password login currently maps Egyptian phone numbers to an internal non-deliverable email identity. It does not prove phone ownership and is not a substitute for production OTP verification.
+Phone/password login currently maps Egyptian phone numbers to an internal non-deliverable email identity. It does not prove phone ownership and is not a substitute for production OTP verification. The UI enforces a minimum of 8 password characters; leaked-password protection still needs to be enabled in Supabase Auth settings before launch.
 
 ## Supabase
 
 Project URL: https://qfweejmqooojsedsypen.supabase.co
 
-For a fresh environment, apply every SQL file in supabase/migrations/ in filename order. The connected project already has migrations 001–021 applied. Never expose a Supabase service-role or secret key in the mobile app or public repository; the app uses a publishable key and relies on RLS and server-side RPC authorization.
+For a fresh environment, apply every SQL file in supabase/migrations/ in filename order. The connected project currently has 22 applied migrations. Never expose a Supabase service-role or secret key in the mobile app or public repository; the app uses a publishable key and relies on RLS and server-side RPC authorization.
 
 ## Local development
 
