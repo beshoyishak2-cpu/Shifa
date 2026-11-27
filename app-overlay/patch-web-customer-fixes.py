@@ -19,6 +19,42 @@ app = app[:react_import.start()] + "import { " + ", ".join(imports) + " } from '
 if "React.useState(" in app or "React.useEffect(" in app:
     raise SystemExit("React namespace hook usage remains after runtime fix")
 
+# Explicitly import the stylesheet from the component entry. The extracted app's
+# entrypoint did not guarantee style.css was part of the web bundle.
+if "import './style.css';" not in app and 'import "./style.css";' not in app:
+    app = "import './style.css';\\n" + app
+
+# Portable inline SVGs for the welcome/promo artwork; do not depend on emoji fonts.
+icon_component = r"""
+function SareeInlineIcon({name,size=24}:{name:'bag'|'sparkle'|'scooter'|'all'|'restaurant'|'arrow';size?:number}){
+ const common={width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,focusable:false,'aria-hidden':true as const};
+ const paths:Record<string,any>={
+  bag:<><path d="M5 8h14l1 12H4L5 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/><path d="M9 13h6"/></>,
+  sparkle:<><path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2Z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></>,
+  scooter:<><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 18h5l-2-7H8l-2 7"/><path d="M11 11h4l2 7M14 11l1-3h3"/><path d="M8 8h3"/></>,
+  all:<><path d="m12 2 2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2L12 2Z"/><path d="m19 16 .6 1.8 1.8.6-1.8.6L19 21l-.6-2-1.8-.6 1.8-.6L19 16Z"/></>,
+  restaurant:<><path d="M6 3v7M3.5 3v4a2.5 2.5 0 0 0 5 0V3M6 9.5V21"/><path d="M15 3v18M15 3c3 2 4 5 4 8h-4"/></>,
+  arrow:<><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></>
+ };
+ return <svg {...common}>{paths[name]}</svg>;
+}
+"""
+if "function SareeInlineIcon(" not in app:
+    marker="type Role = 'customer' | 'merchant' | 'driver' | 'admin';"
+    if marker not in app: raise SystemExit("Could not locate Role type for SVG icon component")
+    app=app.replace(marker,icon_component+"\\n"+marker,1)
+
+# Replace all requested symbols in the customer welcome/promo flow with SVG components.
+app=app.replace('<span className="saree-splash-scooter">🛵</span>','<span className="saree-splash-scooter"><SareeInlineIcon name="scooter" size={30}/></span>')
+app=app.replace('<span>🛍️</span><i>✦</i>','<span><SareeInlineIcon name="bag" size={52}/></span><i><SareeInlineIcon name="sparkle" size={23}/></i>')
+app=app.replace('<span>←</span>','<span className="saree-inline-arrow"><SareeInlineIcon name="arrow" size={15}/></span>')
+app=app.replace("{id:'all',label:'الكل',emoji:'✨'},{id:'restaurant',label:'مطاعم',emoji:'🍽️'},{id:'cafe',label:'كافيهات',emoji:'☕'},{id:'grocery',label:'سوبر ماركت',emoji:'🛒'},{id:'vegetables',label:'خضار وفاكهة',emoji:'🥬'},{id:'pharmacy',label:'صيدليات',emoji:'💊'},{id:'errand',label:'مشوار خاص',emoji:'🛵'},{id:'doctors',label:'الأطباء',emoji:'🩺'}","{id:'all',label:'الكل',icon:'all'},{id:'restaurant',label:'مطاعم',icon:'restaurant'},{id:'cafe',label:'كافيهات',icon:'cafe'},{id:'grocery',label:'سوبر ماركت',icon:'grocery'},{id:'vegetables',label:'خضار وفاكهة',icon:'vegetables'},{id:'pharmacy',label:'صيدليات',icon:'pharmacy'},{id:'errand',label:'مشوار خاص',icon:'scooter'},{id:'doctors',label:'الأطباء',icon:'doctor'}")
+app=app.replace("as {id:Service;label:string;emoji:string}[]).map(x=><button","as {id:Service;label:string;icon:string}[]).map(x=><button")
+app=app.replace("<span>{x.emoji}</span>{x.label}</button>)}</div>","<span>{x.icon==='all'?<SareeInlineIcon name=\"all\"/>:x.icon==='restaurant'?<SareeInlineIcon name=\"restaurant\"/>:x.icon==='scooter'?<SareeInlineIcon name=\"scooter\"/>:x.icon==='cafe'?<SareeInlineIcon name=\"sparkle\"/>:x.icon==='grocery'?<SareeInlineIcon name=\"bag\"/>:<SareeInlineIcon name=\"sparkle\"/>}</span>{x.label}</button>)}</div>",1)
+# Search suggestion emoji array rendered as raw text: replace it with icon component elements.
+app=app.replace("{['🍽️','💊','🛒','🥬'][i]} {term}","{i===0?<SareeInlineIcon name=\"restaurant\" size={16}/>:<SareeInlineIcon name=\"bag\" size={16}/>} {term}")
+app_path.write_text(app)
+
 # Add a customer-only root class so the bottom navigation can reserve page space.
 root_old = "return <div className={dark?'app dark':'app'}>"
 root_new = "return <div className={role==='customer'?(dark?'app dark customer-nav-enabled':'app customer-nav-enabled'):(dark?'app dark':'app')}>"
@@ -78,9 +114,9 @@ app_path.write_text(app)
 # Keep the bottom bar fixed and above every customer screen at mobile and desktop widths.
 css += r"""
 
-/* Web + mobile customer navigation: fixed, always visible, and above page content. */
-.app.customer-nav-enabled{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
-.mobile-bottom-nav{position:fixed!important;left:0!important;right:0!important;bottom:0!important;z-index:2147483000!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:0;width:100%;min-height:66px;margin:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom,0px));box-sizing:border-box;background:#fff;border-top:1px solid #e3ece7;box-shadow:0 -8px 24px #00000014;direction:rtl;isolation:isolate;transform:none!important;contain:none!important}
+/* Web + mobile customer navigation: loaded from App.tsx and anchored to the viewport. */
+#root .app.customer-nav-enabled{padding-bottom:calc(82px + env(safe-area-inset-bottom,0px))!important}
+body .mobile-bottom-nav{position:fixed!important;inset-inline:0!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;z-index:2147483647!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:0;width:100%;min-height:66px;margin:0;padding:7px 8px env(safe-area-inset-bottom,0px)!important;box-sizing:border-box;background:#fff;border-top:1px solid #e3ece7;box-shadow:0 -8px 24px #00000014;direction:rtl;isolation:isolate;transform:none!important;contain:none!important}
 .mobile-bottom-nav.dark{background:#20352d;border-color:#344c41}
 .mobile-bottom-nav button{color:#80938c}
 .mobile-bottom-nav.dark button{color:#a5b9ae}
@@ -93,8 +129,8 @@ css += r"""
 .mobile-bottom-nav button.active:after{top:-7px}
 .mobile-bottom-nav .nav-cart-icon{position:relative;display:inline-flex;align-items:center;justify-content:center}
 .hero-art{display:grid;place-items:center;overflow:hidden}
-.hero-art svg{display:block;width:100%;height:100%;max-width:160px;max-height:160px}
-@media(max-width:700px){.app.customer-nav-enabled{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}.mobile-bottom-nav{min-height:64px;padding-left:5px;padding-right:5px}.mobile-bottom-nav button{font-size:10px}}
+.hero-art svg{display:block;width:100%;height:100%;max-width:160px;max-height:160px}\n.saree-promo-art>span,.saree-promo-art>i{display:grid;place-items:center}.saree-promo-art svg{display:block}.saree-splash-scooter svg{color:#fff;display:block}.saree-inline-arrow{display:inline-grid;vertical-align:middle;place-items:center}.saree-inline-arrow svg{display:block}
+@media(max-width:700px){#root .app.customer-nav-enabled{padding-bottom:calc(82px + env(safe-area-inset-bottom,0px))!important}.mobile-bottom-nav{min-height:64px;padding-left:5px;padding-right:5px}.mobile-bottom-nav button{font-size:10px}}
 @media(max-width:700px){.mobile-bottom-nav.keyboard-open{display:none!important}}
 """
 css_path.write_text(css)
@@ -138,11 +174,18 @@ test('welcome artwork is inline and customer navigation is fixed on every viewpo
   assert.ok(source.includes('className="hero-art" aria-hidden="true"><svg viewBox="0 0 160 160"'));
   assert.ok(source.includes('customer-nav-enabled'));
   assert.ok(source.includes('mobile-bottom-nav'));
-  assert.ok(css.includes('.mobile-bottom-nav{position:fixed!important'));
+  assert.ok(css.includes('body .mobile-bottom-nav{position:fixed!important'));
+  assert.ok(source.includes("import './style.css';"));
+  assert.ok(css.includes('padding:7px 8px env(safe-area-inset-bottom,0px)!important'));
   assert.ok(css.includes('z-index:2147483000!important'));
   assert.ok(css.includes('.app.customer-nav-enabled{padding-bottom:'));
   assert.ok(source.includes('createPortal(('));
   assert.ok(source.includes('document.body'));
+  assert.ok(source.includes('function SareeInlineIcon('));
+  assert.ok(!source.includes('🛍️'));
+  assert.ok(!source.includes('>✦</i>'));
+  assert.ok(!source.includes('>🛵</span>'));
+  assert.ok(!source.includes('<span>←</span>'));
   assert.ok(css.includes('env(safe-area-inset-bottom,0px)'));
 });
 test('delivery location indicator is inline SVG rather than an emoji glyph', () => {
