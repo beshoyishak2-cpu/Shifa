@@ -34,6 +34,7 @@ jobs:
           python3 app-overlay/patch-auth.py
           python3 app-overlay/patch-auth-refresh.py
           python3 app-overlay/patch-saree-ops.py
+          python3 app-overlay/patch-support.py
           python3 app-overlay/patch-back-navigation.py
       - name: Upgrade Capacitor packages to v8
         run: |
