@@ -74,17 +74,28 @@ def generate_android(icon,bg,white):
     save(splash,res/"drawable/splash.png")
 def generate_ios(icon,bg,white):
     assets=ROOT/"ios/App/App/Assets.xcassets"; appicon=assets/"AppIcon.appiconset"; appicon.mkdir(parents=True,exist_ok=True)
-    slots=[("20x20","2x",40),("20x20","3x",60),("29x29","2x",58),("29x29","3x",87),("40x40","2x",80),("40x40","3x",120),("60x60","2x",120),("60x60","3x",180),("76x76","1x",76),("76x76","2x",152),("83.5x83.5","2x",167),("1024x1024","1x",1024)]
+    slots=[
+        ("iphone","20x20","2x",40),("iphone","20x20","3x",60),
+        ("iphone","29x29","2x",58),("iphone","29x29","3x",87),
+        ("iphone","40x40","2x",80),("iphone","40x40","3x",120),
+        ("iphone","60x60","2x",120),("iphone","60x60","3x",180),
+        ("ipad","20x20","1x",20),("ipad","20x20","2x",40),
+        ("ipad","29x29","1x",29),("ipad","29x29","2x",58),
+        ("ipad","40x40","1x",40),("ipad","40x40","2x",80),
+        ("ipad","76x76","1x",76),("ipad","76x76","2x",152),
+        ("ipad","83.5x83.5","2x",167),
+        ("ios-marketing","1024x1024","1x",1024)
+    ]
     images=[]
-    for logical,scale,px in slots:
-        filename=f"AppIcon-{logical.replace('.','_')}-{scale}.png"
+    for idiom,logical,scale,px in slots:
+        filename=f"AppIcon-{idiom}-{logical.replace('.','_')}-{scale}.png"
         save(icon.resize((px,px),Image.Resampling.LANCZOS),appicon/filename)
-        images.append({"filename":filename,"idiom":"universal","platform":"ios","size":logical,"scale":scale})
+        images.append({"filename":filename,"idiom":idiom,"platform":"ios","size":logical,"scale":scale})
     (appicon/"Contents.json").write_text(json.dumps({"images":images,"info":{"author":"xcode","version":1}},indent=2)+"\n",encoding="utf-8")
     splashset=assets/"Splash.imageset"; splashset.mkdir(parents=True,exist_ok=True)
     splash=Image.new("RGBA",(2732,2732),bg); splash.alpha_composite(contain(white,(2732,2732),.62))
     save(splash,splashset/"splash.png")
-    (splashset/"Contents.json").write_text(json.dumps({"images":[{"filename":"splash.png","idiom":"universal"}],"info":{"author":"xcode","version":1}},indent=2)+"\n",encoding="utf-8")
+    (splashset/"Contents.json").write_text(json.dumps({"images":[{"filename":"splash.png","idiom":"universal","scale":"1x"}],"info":{"author":"xcode","version":1}},indent=2)+"\n",encoding="utf-8")
 icon=load_png(ICON); white=load_png(WHITE); load_png(GREEN)
 bg="#{:02X}{:02X}{:02X}".format(*icon.getpixel((0,0))[:3])
 android_present=(ROOT/"android/app").is_dir()
