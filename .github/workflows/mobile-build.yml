@@ -77,6 +77,23 @@ jobs:
           EOF
       - run: npx cap add android
       - run: npx cap sync android
+      - name: Set unique Google Play version
+        env:
+          APP_BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          p = Path("android/app/build.gradle")
+          s = p.read_text()
+          s, count = re.subn(r"versionCode\\s+\\d+", "versionCode " + os.environ["APP_BUILD_NUMBER"], s, count=1)
+          if count != 1:
+              raise SystemExit("Could not set Android versionCode")
+          s, count = re.subn(r'versionName\s+"[^"]+"', 'versionName "1.0.' + os.environ["APP_BUILD_NUMBER"] + '"', s, count=1)
+          if count != 1:
+              raise SystemExit("Could not set Android versionName")
+          p.write_text(s)
+          PY
       - name: Build debug APK
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
@@ -107,15 +124,22 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           cd android
-          ./gradlew assembleRelease \
+          ./gradlew assembleRelease bundleRelease \
             -Pandroid.injected.signing.store.file="$RUNNER_TEMP/saree3-release.keystore" \
             -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
-      - name: Upload signed Android release
+      - name: Upload signed Android release APK
         if: steps.signing.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: shifa-android-release-apk
           path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+      - name: Upload signed Google Play Android App Bundle
+        if: steps.signing.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: shifa-google-play-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
