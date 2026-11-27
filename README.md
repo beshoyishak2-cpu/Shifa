@@ -49,7 +49,7 @@ npm run build
 
 ## Android and iOS
 
-GitHub Actions builds the Android Debug APK. Release distribution requires an Android signing key stored as a GitHub Actions secret. The iOS workflow currently builds an iOS Simulator app; a signed IPA requires Apple Developer certificates and provisioning profiles.
+GitHub Actions builds the Android Debug APK. The Android workflow upgrades its Capacitor packages to v8 (Android 16 / API 36), assigns a unique versionCode, and can produce a signed Release APK plus Google Play AAB once the permanent Android upload keystore is stored as GitHub Actions secrets. The iOS workflow currently builds an iOS Simulator app; a signed IPA requires Apple Developer certificates and provisioning profiles.
 
 ## Operational defaults
 
