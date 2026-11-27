@@ -100,10 +100,21 @@ jobs:
       - name: Add iOS platform and generate native brand assets
         run: |
           npx cap add ios
-          python3 -m pip install --user Pillow
-          python3 app-overlay/generate-brand-icons.py
-          test -f ios/App/App/Assets.xcassets/AppIcon.appiconset/Contents.json
-          test -f ios/App/App/Assets.xcassets/Splash.imageset/splash.png
+          python3 -m venv /tmp/saree-brand-venv
+          /tmp/saree-brand-venv/bin/python -m pip install Pillow
+          /tmp/saree-brand-venv/bin/python app-overlay/generate-brand-icons.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          iconset = Path("ios/App/App/Assets.xcassets/AppIcon.appiconset")
+          data = json.loads((iconset / "Contents.json").read_text())
+          assert data["images"], "No iOS app icon entries found"
+          for item in data["images"]:
+              assert (iconset / item["filename"]).is_file(), item["filename"]
+          splash = Path("ios/App/App/Assets.xcassets/Splash.imageset")
+          assert (splash / "splash.png").is_file()
+          assert json.loads((splash / "Contents.json").read_text())["images"]
+          PY
           python3 app-overlay/patch-ios-location-usage.py
           npx cap sync ios
       - name: Prepare public SwiftPM dependency access
