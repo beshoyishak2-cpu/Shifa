@@ -12,12 +12,23 @@ new='''function normalizeEgyptianPhone(phone: string) {
   return value;
 }
 
+// Internal, non-deliverable email identity derived from the phone number.
+function phoneLoginEmail(phone: string) {
+  const normalized = normalizeEgyptianPhone(phone);
+  const digits = normalized.replace(/\\D/g, '');
+  if (!/^201[0125][0-9]{8}$/.test(digits)) {
+    throw new Error('اكتب رقم موبايل مصري صحيح');
+  }
+  return `${digits}@users.saree3.invalid`;
+}
+
 export async function registerWithPhone(phone: string, password: string, fullName: string) {
   if (!supabase || !backendReady) throw new Error('خدمة التسجيل غير متاحة حاليًا');
+  const normalizedPhone = normalizeEgyptianPhone(phone);
   const { data, error } = await supabase.auth.signUp({
-    phone: normalizeEgyptianPhone(phone),
+    email: phoneLoginEmail(phone),
     password,
-    options: { data: { full_name: fullName.trim() } }
+    options: { data: { full_name: fullName.trim(), phone: normalizedPhone } }
   });
   if (error) throw error;
   return data;
@@ -26,13 +37,12 @@ export async function registerWithPhone(phone: string, password: string, fullNam
 export async function loginWithPhone(phone: string, password: string) {
   if (!supabase || !backendReady) throw new Error('خدمة تسجيل الدخول غير متاحة حاليًا');
   const { data, error } = await supabase.auth.signInWithPassword({
-    phone: normalizeEgyptianPhone(phone),
+    email: phoneLoginEmail(phone),
     password
   });
   if (error) throw error;
   return data;
 }
-
 '''
 if 'requestPhoneOtp' not in s: raise SystemExit('OTP backend functions not found')
 p.write_text(s[:start]+new+s[end:])
