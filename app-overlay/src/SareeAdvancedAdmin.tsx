@@ -17,7 +17,7 @@ function AdvancedAdmin(){
  const [stock,setStock]=useState({product_id:'',batch_code:'',quantity:'1',expiry_date:''});
  const [zone,setZone]=useState({merchant_id:'',area_name:'',delivery_fee:'0',minimum_order:'0',estimated_minutes:'45'});
  const [alt,setAlt]=useState({product_id:'',alternative_product_id:'',merchant_id:''});
- const [opened,setOpened]=useState(false);
+ const [opened,setOpened]=useState(false),[medicineQuery,setMedicineQuery]=useState(''),[medicineArea,setMedicineArea]=useState('ملوي'),[medicineResults,setMedicineResults]=useState<R[]>([]),[medicineBusy,setMedicineBusy]=useState(false);
  const say=(s:string)=>setMsg(s);
  async function load(){
   if(!client||!user)return;
@@ -39,6 +39,13 @@ function AdvancedAdmin(){
  }
  useEffect(()=>{if(!client)return;client.auth.getSession().then(async({data})=>{const id=data.session?.user.id||null;setUser(id);if(id){const r=await client.from('profiles').select('role').eq('id',id).maybeSingle();setAdmin(r.data?.role==='admin');}});const {data:l}=client.auth.onAuthStateChange(async(_e,s)=>{const id=s?.user.id||null;setUser(id);if(id){const r=await client.from('profiles').select('role').eq('id',id).maybeSingle();setAdmin(r.data?.role==='admin');}else setAdmin(false);});return()=>l.subscription.unsubscribe();},[]);
  useEffect(()=>{if(admin&&user)void load();},[admin,user]);
+ async function searchPharmacyStock(){
+  if(!client)throw Error('الاتصال غير متاح');
+  if(medicineQuery.trim().length<2)throw Error('اكتب اسم دواء من حرفين على الأقل');
+  setMedicineBusy(true);
+  try{const {data,error}=await client.rpc('saree_search_pharmacy_stock',{p_search:medicineQuery.trim(),p_area:medicineArea.trim()||null});if(error)throw error;setMedicineResults(data||[]);}
+  finally{setMedicineBusy(false);}
+ }
  const run=async(fn:()=>Promise<void>)=>{setBusy(true);setMsg('');try{await fn();}catch(e){say((e as Error).message||'حدث خطأ');}finally{setBusy(false);}};
  const expired=batches.filter(x=>x.expiry_date&&new Date(x.expiry_date+'T23:59:59')<new Date());
  const soon=batches.filter(x=>x.expiry_date&&new Date(x.expiry_date+'T23:59:59')>=new Date()&&new Date(x.expiry_date+'T23:59:59')<new Date(Date.now()+90*86400000));
@@ -52,7 +59,15 @@ function AdvancedAdmin(){
  const css:Record<string,React.CSSProperties>={wrap:{position:'fixed',zIndex:2147483002,right:12,bottom:'max(88px, calc(env(safe-area-inset-bottom) + 84px))',direction:'rtl',fontFamily:'inherit',color:'#183a34'},trigger:{border:0,borderRadius:999,background:'#164e63',color:'#fff',padding:'12px 16px',fontWeight:800,boxShadow:'0 7px 24px #052f2750'},panel:{width:'min(460px, calc(100vw - 24px))',maxHeight:'min(82dvh,760px)',overflow:'auto',background:'#fff',border:'1px solid #d8e8e2',borderRadius:18,boxShadow:'0 14px 48px #052f2740'},head:{background:'#eaf4f7',padding:13,display:'flex',justifyContent:'space-between',position:'sticky',top:0,zIndex:2},body:{padding:12,display:'grid',gap:9},card:{border:'1px solid #dce8eb',borderRadius:11,padding:10,display:'grid',gap:7},input:{width:'100%',boxSizing:'border-box',padding:9,border:'1px solid #cbdde1',borderRadius:8,background:'#fff',font:'inherit'},btn:{border:0,borderRadius:8,padding:'8px 10px',background:'#164e63',color:'#fff',fontWeight:700},row:{display:'flex',gap:7,flexWrap:'wrap',alignItems:'center'},muted:{fontSize:12,color:'#637b82'}};
  const button=(s:string,fn:()=>void,soft=false)=><button disabled={busy} style={{...css.btn,background:soft?'#e7f0f2':'#164e63',color:soft?'#164e63':'white'}} onClick={fn}>{s}</button>;
  const select=(value:string,onChange:(v:string)=>void,items:R[],label:(x:R)=>string)=><select style={css.input} value={value} onChange={e=>onChange(e.target.value)}>{items.map(x=><option key={x.id} value={x.id}>{label(x)}</option>)}</select>;
- if(!admin)return null;
+ if(!admin)return <div style={css.wrap}>
+ {!opened?<button style={css.trigger} onClick={()=>setOpened(true)}>البحث عن دواء بالصيدليات</button>:
+ <section style={css.panel}><header style={css.head}><b>البحث عن توافر الدواء</b><button style={css.btn} onClick={()=>setOpened(false)}>إغلاق</button></header>
+ <div style={css.body}><input style={css.input} placeholder="اسم الدواء أو المنتج" value={medicineQuery} onChange={e=>setMedicineQuery(e.target.value)}/>
+ <input style={css.input} placeholder="المنطقة" value={medicineArea} onChange={e=>setMedicineArea(e.target.value)}/>
+ {button(medicineBusy?'جارٍ البحث…':'ابحث في الصيدليات',()=>void run(searchPharmacyStock))}
+ <div style={css.card}><span>النتائج تعرض الكميات المسجلة في دفعات بتاريخ صلاحية معلوم وغير منتهٍ فقط. توافر الدواء لا يغني عن استشارة الصيدلي.</span></div>
+ {medicineResults.length===0?<div style={css.card}>لا توجد نتائج حتى الآن. قد لا تكون الصيدليات سجلت دفعات المخزون بعد.</div>:medicineResults.map((x,i)=><article style={css.card} key={x.product_id+'-'+x.pharmacy_name+'-'+i}><b>{x.product_name}</b><span>{x.pharmacy_name} · {x.area_name||medicineArea}</span><span>السعر: {fmt(x.unit_price)} · الكمية المسجلة: {x.available_quantity}</span><span>أقرب انتهاء صلاحية مسجل: {x.nearest_expiry}</span></article>)}</div></section>}
+ </div>;
  return <div style={css.wrap}>{!opened?<button style={css.trigger} onClick={()=>{setOpened(true);void load();}}>إدارة متقدمة · سريع</button>:<section style={css.panel}>
  <header style={css.head}><div><b>سريع · الإدارة المتقدمة</b><div style={css.muted}>المخزون والصلاحية والصلاحيات والتوصيل والاسترجاع</div></div><button style={css.btn} onClick={()=>setOpened(false)}>إغلاق</button></header>
  <div style={css.body}>
