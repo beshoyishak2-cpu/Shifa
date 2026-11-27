@@ -37,11 +37,12 @@ Windows PowerShell:
 
 ## 3) تشغيل البناء
 
-بعد حفظ الأسرار، افتح Actions → Saree3 Android build → Run workflow. سينتج البناء ملف Debug للاختبار وملف Release موقّع إذا كانت الأسرار الأربعة موجودة.
+بعد حفظ الأسرار، افتح Actions → Saree3 Android build → Run workflow. سينتج البناء ملف Debug للاختبار، وملف Release APK موقّع، وملف Android App Bundle بصيغة AAB موقّع للنشر على Google Play إذا كانت الأسرار الأربعة موجودة. يضبط Workflow رقم versionCode فريدًا تلقائيًا من رقم تشغيل GitHub Actions.
 
 ## تنبيه مهم
 
 - لا تفقد ملف المفتاح أو كلمات مروره؛ ستحتاج المفتاح نفسه لتحديث التطبيق المنشور على Google Play.
 - ملف Debug ليس مناسبًا للنشر التجاري.
+- ملف AAB هو الملف الذي ترفعه إلى Google Play Console، بينما APK الموقّع مناسب للتثبيت والاختبار المباشر.
 - تجهيز Google Play يتطلب مراجعة بيانات التطبيق وسياسة الخصوصية وتصنيف المحتوى واختبار النسخة النهائية.
 - iOS يحتاج شهادة توزيع وملف Provisioning Profile وحساب Apple Developer؛ بناء المحاكي الحالي ليس IPA للنشر.
