@@ -22,7 +22,7 @@ if "React.useState(" in app or "React.useEffect(" in app:
 # Explicitly import the stylesheet from the component entry. The extracted app's
 # entrypoint did not guarantee style.css was part of the web bundle.
 if "import './style.css';" not in app and 'import "./style.css";' not in app:
-    app = "import './style.css';\\n" + app
+    app = "import './style.css';\n" + app
 
 # Portable inline SVGs for the welcome/promo artwork; do not depend on emoji fonts.
 icon_component = r"""
@@ -42,7 +42,7 @@ function SareeInlineIcon({name,size=24}:{name:'bag'|'sparkle'|'scooter'|'all'|'r
 if "function SareeInlineIcon(" not in app:
     marker="type Role = 'customer' | 'merchant' | 'driver' | 'admin';"
     if marker not in app: raise SystemExit("Could not locate Role type for SVG icon component")
-    app=app.replace(marker,icon_component+"\\n"+marker,1)
+    app=app.replace(marker,icon_component+"\n"+marker,1)
 
 # Replace all requested symbols in the customer welcome/promo flow with SVG components.
 app=app.replace('<span className="saree-splash-scooter">🛵</span>','<span className="saree-splash-scooter"><SareeInlineIcon name="scooter" size={30}/></span>')
@@ -116,7 +116,7 @@ css += r"""
 
 /* Web + mobile customer navigation: loaded from App.tsx and anchored to the viewport. */
 #root .app.customer-nav-enabled{padding-bottom:calc(82px + env(safe-area-inset-bottom,0px))!important}
-body .mobile-bottom-nav{position:fixed!important;inset-inline:0!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;z-index:2147483647!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:0;width:100%;min-height:66px;margin:0;padding:7px 8px env(safe-area-inset-bottom,0px)!important;box-sizing:border-box;background:#fff;border-top:1px solid #e3ece7;box-shadow:0 -8px 24px #00000014;direction:rtl;isolation:isolate;transform:none!important;contain:none!important}
+body .mobile-bottom-nav{position:fixed!important;inset-inline:0!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;z-index:2147483647!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:0;width:100%;min-height:66px;margin:0;padding-top:7px;padding-left:8px;padding-right:8px;padding-bottom:env(safe-area-inset-bottom,0px)!important;box-sizing:border-box;background:#fff;border-top:1px solid #e3ece7;box-shadow:0 -8px 24px #00000014;direction:rtl;isolation:isolate;transform:none!important;contain:none!important}
 .mobile-bottom-nav.dark{background:#20352d;border-color:#344c41}
 .mobile-bottom-nav button{color:#80938c}
 .mobile-bottom-nav.dark button{color:#a5b9ae}
