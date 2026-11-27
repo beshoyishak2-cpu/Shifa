@@ -99,6 +99,7 @@ jobs:
           }
           EOF
       - run: npx cap add android
+      - run: python3 app-overlay/patch-android-location-permissions.py
       - run: npx cap sync android
       - name: Set unique Google Play version
         env:
