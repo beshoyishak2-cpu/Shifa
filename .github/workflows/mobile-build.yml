@@ -43,6 +43,7 @@ jobs:
           python3 -c "import base64,gzip,pathlib; pathlib.Path('/tmp/patch-product-options.py').write_bytes(gzip.decompress(base64.b64decode(pathlib.Path('app-overlay/patch-product-options.py.gz.b64').read_text())))"
           python3 /tmp/patch-product-options.py
           python3 app-overlay/patch-merchant-operations.py
+          python3 app-overlay/patch-mobile-bottom-nav.py
       - name: Preserve patched source for integration review
         uses: actions/upload-artifact@v4
         with:
