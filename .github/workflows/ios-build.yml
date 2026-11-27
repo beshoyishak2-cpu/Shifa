@@ -11,6 +11,7 @@ on:
 jobs:
   ios-simulator:
     runs-on: macos-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Extract app source archive
@@ -43,6 +44,7 @@ jobs:
           python3 app-overlay/patch-merchant-operations.py
           python3 app-overlay/patch-mobile-bottom-nav.py
           SAREE_FINAL_PATCH=1 python3 app-overlay/patch-location.py # finalize courier address handoff
+          python3 app-overlay/patch-city-spelling.py
       - name: Upgrade Capacitor packages to v8
         run: |
           npm pkg set "dependencies.@capacitor/core=^8.0.0"
@@ -75,6 +77,9 @@ jobs:
         run: npm install --no-audit --no-fund --save-dev @types/react @types/react-dom
       - name: Build web app
         run: npm run build
+      - name: Verify city spelling in web bundle
+        run: |
+          if grep -R -n 'ملوي' dist; then echo 'Incorrect city spelling remains in dist'; exit 1; fi
       - name: Configure Capacitor for CI
         run: |
           rm -f capacitor.config.ts capacitor.config.js capacitor.config.mjs
@@ -91,22 +96,43 @@ jobs:
           npx cap add ios
           python3 app-overlay/patch-ios-location-usage.py
           npx cap sync ios
-      - name: Configure GitHub authentication for Swift Package Manager
+      - name: Prepare public SwiftPM dependency access
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GIT_TERMINAL_PROMPT: '0'
         run: |
-          # SwiftPM clones Capacitor's public GitHub packages in a separate cache,
-          # outside the checkout's local git credentials. Supply the workflow token
-          # to git so xcodebuild can resolve those dependencies non-interactively.
-          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
-          git config --global credential.interactive never
+          # actions/checkout injects a repository-scoped Authorization header.
+          # SwiftPM also clones public packages owned by ionic-team; forwarding
+          # that scoped credential makes GitHub reject those otherwise-public repos.
+          git config --local --unset-all http.https://github.com/.extraheader || true
+          git config --global --unset-all http.https://github.com/.extraheader || true
+          git config --global --unset-all credential.interactive || true
+          for dependency in \
+            ionic-team/ion-ios-geolocation \
+            ionic-team/capacitor-swift-pm \
+            ionic-team/ion-ios-camera; do
+            echo "Checking public SwiftPM dependency: $dependency"
+            timeout 60 git ls-remote "https://github.com/$dependency.git" HEAD >/dev/null
+          done
+      - name: Resolve iOS Swift packages
+        env:
+          GIT_TERMINAL_PROMPT: '0'
+        run: |
+          timeout 8m xcodebuild -resolvePackageDependencies \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -sdk iphonesimulator \
+            -clonedSourcePackagesDirPath build/SourcePackages
       - name: Build iOS Simulator app
+        env:
+          GIT_TERMINAL_PROMPT: '0'
         run: |
-          xcodebuild -project ios/App/App.xcodeproj \
+          timeout 10m xcodebuild -project ios/App/App.xcodeproj \
             -scheme App \
             -sdk iphonesimulator \
             -configuration Debug \
             -derivedDataPath build \
+            -clonedSourcePackagesDirPath build/SourcePackages \
+            -disableAutomaticPackageResolution \
             CODE_SIGNING_ALLOWED=NO build
       - uses: actions/upload-artifact@v4
         with:
