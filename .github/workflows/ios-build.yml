@@ -36,6 +36,9 @@ jobs:
           python3 app-overlay/patch-saree-ops.py
           python3 app-overlay/patch-support.py
           python3 app-overlay/patch-back-navigation.py
+          python3 app-overlay/patch-customer-catalog.py
+          python3 -c "import base64,gzip,pathlib; pathlib.Path('/tmp/patch-product-options.py').write_bytes(gzip.decompress(base64.b64decode(pathlib.Path('app-overlay/patch-product-options.py.gz.b64').read_text())))"
+          python3 /tmp/patch-product-options.py
       - name: Upgrade Capacitor packages to v8
         run: |
           npm pkg set "dependencies.@capacitor/core=^8.0.0"
