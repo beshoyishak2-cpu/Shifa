@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.shifa.malawy',
+  appId: 'com.shifa.mallawi',
   appName: 'سريع',
   webDir: 'dist',
   server: { androidScheme: 'https' },
