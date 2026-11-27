@@ -54,7 +54,7 @@ if "deliveryMapUrl?:string" not in s:
     s=s.replace("notes:string;driver?:string;prescriptionName?:string;pickup?:string;dropoff?:string};","notes:string;driver?:string;prescriptionName?:string;pickup?:string;dropoff?:string;deliveryMapUrl?:string};",1)
 
 if "تغيير العنوان أو تحديده على الخريطة" not in s:
-    old='<label>عنوان التوصيل<input value={`${address.area} – ${address.street} – ${address.landmark}`} readOnly/></label>'
+    old='<label>عنوان التوصيل<input value={`${address.area} – ${address.street} – ${address.landmark} – ${address.unit||\'\'}`} readOnly/></label>'
     new=old+'<button className="outline full" onClick={()=>window.dispatchEvent(new Event("saree3:open-address"))}>تغيير العنوان أو تحديده على الخريطة</button>'
     if old not in s: raise SystemExit("Cannot find checkout address anchor")
     s=s.replace(old,new,1)
