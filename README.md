@@ -6,7 +6,7 @@ Arabic RTL local services and delivery MVP for Mallawi, Minya. Built with React,
 - Android Debug APK builds successfully in GitHub Actions.
 - iOS Simulator app builds successfully in GitHub Actions. This is not an installable iPhone IPA.
 - Supabase project URL and publishable key are configured in the CI build environment.
-- Database migrations are committed in `supabase/migrations/` but have **not** been executed against the live Supabase project from this repository.
+- Database migrations 001–017 are committed and have been applied to the connected Supabase project. The new Saree operations schema includes partner applications, payment proof review, wallet ledger, courier commissions and settlement controls. Verify each workflow with separate role accounts before launch.
 - The UI is still an MVP/demo in important areas. Do not treat a successful mobile build as proof that live orders, auth, uploads, notifications or tracking are operational.
 
 ## Supabase setup
@@ -45,3 +45,4 @@ The GitHub Actions workflow produces an **iOS Simulator app** only. An installab
 - Field-test on real Android/iOS devices and monitor production errors.
 
 **Honesty note:** This is an MVP foundation, not yet a production-ready marketplace. Successful CI builds verify packaging/compilation only; they do not prove live backend behavior.
+\n## Saree operations backend (migrations 015–017)\n\n- `partner_applications`: customer-submitted merchant/driver onboarding, private document uploads, admin approval/rejection.\n- `payment_receipts`: private wallet/Instapay proof, admin confirmation/rejection and paid order status.\n- `wallet_accounts` / `wallet_transactions`: ledger-backed balances; administrative credit and order debit are transactional RPCs.\n- `courier_commissions` / `courier_settlement_accounts` / `courier_settlements`: delivery commission accrual, daily/maximum-debt auto-lock, proof upload and admin settlement confirmation.\n- `courier_order_cancellations`: audited pre-pickup release back to the available driver queue.\n- `saree_app_settings` and `saree_commission_settings`: admin-controlled feature flags and transfer/commission settings.\n- Operational tables are published to Supabase Realtime. Driver claiming remains row-locked and first-come-first-served.\n\nThe build adds a live operations panel for customer partner applications/payments, driver dispatch/settlement and admin reviews/settings. The existing core storefront still requires a full field test (especially checkout, file permissions, maps, low-bandwidth behavior and iOS packaging) before a public launch.\n
