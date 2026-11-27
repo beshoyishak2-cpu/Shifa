@@ -54,7 +54,7 @@ main=Path("src/main.tsx")
 if not main.exists(): raise SystemExit("src/main.tsx missing for diagnostics import")
 mt=main.read_text(encoding="utf-8")
 if "import './lib/issue-log';" not in mt:
- main.write_text("import './lib/issue-log';\\n"+mt,encoding="utf-8")
+ main.write_text("import './lib/issue-log';\n"+mt,encoding="utf-8")
 
 effect=r"""
  useEffect(()=>{
@@ -68,7 +68,7 @@ if 'const count=cart.reduce' not in s: raise SystemExit("issue log effect anchor
 if 'saree-issue-page' not in s:
  anchor=' const count=cart.reduce'
  if anchor not in s: raise SystemExit("issue log effect anchor missing")
- s=s.replace(anchor,effect+'\\n'+anchor,1)
+ s=s.replace(anchor,effect+'\n'+anchor,1)
 s=s.replace("if 'SAREE3_FETCH_WRAPPED' not in s:\n anchor=' const count=cart.reduce'\n if anchor not in s: raise SystemExit('issue logger: effect anchor missing')\n s=s.replace(anchor,effect+'\\n'+anchor,1)","if 'saree-issue-page' not in s:\n anchor=' const count=cart.reduce'\n s=s.replace(anchor,effect+'\\n'+anchor,1)")
 page=r"""
  {tab==='issue-log'&&<section className="panel saree-issue-page" dir="rtl"><div className="section-title"><h2>سجل المشاكل</h2><button className="outline" onClick={()=>setTab('profile')}>رجوع</button></div>
