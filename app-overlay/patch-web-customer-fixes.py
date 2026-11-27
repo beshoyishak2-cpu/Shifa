@@ -41,6 +41,38 @@ elif 'className="hero-art" aria-hidden="true"><svg viewBox="0 0 160 160"' not in
 if "mobile-bottom-nav" not in app:
     raise SystemExit("Customer bottom navigation markup is missing")
 
+# Render the customer bar directly under document.body. This escapes any transformed,
+# clipped, or scrolling app ancestor that can turn position:fixed into page-relative positioning.
+if "createPortal(" not in app:
+    start = app.find("{role==='customer'&&<nav className={`mobile-bottom-nav")
+    if start < 0:
+        raise SystemExit("Could not locate customer navigation JSX for body portal")
+    end = app.find("</nav>}", start)
+    if end < 0:
+        raise SystemExit("Could not locate end of customer navigation JSX")
+    end += len("</nav>}")
+    block = app[start:end]
+    nav_markup = block[len("{role==='customer'&&"):-1]
+    app = app[:start] + "{role==='customer'&&createPortal((" + nav_markup + "),document.body)}" + app[end:]
+    app = app.replace("${searchKeyboardOpen?' keyboard-open':''}", "${searchKeyboardOpen?' keyboard-open':''}${dark?' dark':''}", 1)
+
+if "from 'react-dom'" not in app:
+    app = app.replace("from 'react';", "from 'react';\\nimport { createPortal } from 'react-dom';", 1)
+if "createPortal((" not in app or "document.body" not in app:
+    raise SystemExit("Customer navigation was not moved into document.body")
+
+# Replace the delivery-location emoji with a deterministic inline SVG pin.
+location_path = Path("src/LocationSystem.tsx")
+if location_path.exists():
+    location = location_path.read_text()
+    location_old = '<span>📍</span>'
+    location_new = '<span className="s3-location-pin" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M20 10c0 5.2-8 12-8 12S4 15.2 4 10a8 8 0 1 1 16 0Z" fill="#0b9a79"/><circle cx="12" cy="10" r="2.8" fill="#fff"/></svg></span>'
+    if location_old in location:
+        location = location.replace(location_old, location_new, 1)
+    elif 'className="s3-location-pin"' not in location:
+        raise SystemExit("Could not locate delivery-location emoji")
+    location_path.write_text(location)
+
 app_path.write_text(app)
 
 # Keep the bottom bar fixed and above every customer screen at mobile and desktop widths.
@@ -48,7 +80,14 @@ css += r"""
 
 /* Web + mobile customer navigation: fixed, always visible, and above page content. */
 .app.customer-nav-enabled{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
-.mobile-bottom-nav{position:fixed!important;left:0!important;right:0!important;bottom:0!important;z-index:2147483000!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:0;width:100%;min-height:66px;margin:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom,0px));box-sizing:border-box;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -8px 24px #00000014;direction:rtl}
+.mobile-bottom-nav{position:fixed!important;left:0!important;right:0!important;bottom:0!important;z-index:2147483000!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:0;width:100%;min-height:66px;margin:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom,0px));box-sizing:border-box;background:#fff;border-top:1px solid #e3ece7;box-shadow:0 -8px 24px #00000014;direction:rtl;isolation:isolate;transform:none!important;contain:none!important}
+.mobile-bottom-nav.dark{background:#20352d;border-color:#344c41}
+.mobile-bottom-nav button{color:#80938c}
+.mobile-bottom-nav.dark button{color:#a5b9ae}
+.mobile-bottom-nav button.active{color:#087f68}
+.mobile-bottom-nav.dark button.active{color:#4bc49d}
+.s3-location-pin{display:inline-grid;place-items:center;flex:none;width:22px;height:22px}
+.s3-location-pin svg{display:block;width:22px;height:22px}
 .mobile-bottom-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;min-height:48px;padding:4px 2px;gap:4px;background:transparent;color:var(--muted);font:inherit;font-size:11px;border:0;border-radius:10px;white-space:nowrap}
 .mobile-bottom-nav button.active{color:var(--green);font-weight:800}
 .mobile-bottom-nav button.active:after{top:-7px}
@@ -102,6 +141,15 @@ test('welcome artwork is inline and customer navigation is fixed on every viewpo
   assert.ok(css.includes('.mobile-bottom-nav{position:fixed!important'));
   assert.ok(css.includes('z-index:2147483000!important'));
   assert.ok(css.includes('.app.customer-nav-enabled{padding-bottom:'));
+  assert.ok(source.includes('createPortal(('));
+  assert.ok(source.includes('document.body'));
+  assert.ok(css.includes('env(safe-area-inset-bottom,0px)'));
+});
+test('delivery location indicator is inline SVG rather than an emoji glyph', () => {
+  const location = fs.readFileSync(path.join(root, 'src/LocationSystem.tsx'), 'utf8');
+  assert.ok(location.includes('className="s3-location-pin"'));
+  assert.ok(location.includes('<svg viewBox="0 0 24 24"'));
+  assert.ok(!location.includes('<span>📍</span>'));
 });
 '''
     if "polish uses imported React hooks and cannot throw React is not defined" not in tests:
