@@ -67,7 +67,13 @@ for component_path in (Path("src/SareeAdvancedAdmin.tsx"), Path("app-overlay/src
         old = "if(!admin)return <div style={css.wrap}>"
         if old in component:
             component = component.replace(old, "if(!admin)return null;", 1)
-            component_path.write_text(component)
+        if "if(!admin)return null;" in component:
+            start = component.index("if(!admin)return null;") + len("if(!admin)return null;")
+            admin_marker = "return <div style={css.wrap}>{!opened?<button style={css.trigger} onClick={()=>{setOpened(true);void load();}}>إدارة متقدمة"
+            end = component.find(admin_marker, start)
+            if end >= 0:
+                component = component[:start] + "\n" + component[end:]
+        component_path.write_text(component)
 
 # Runtime/UI regression tests (npm test runs before the production bundle build).
 test_path = Path("tests/source-smoke.test.cjs")
