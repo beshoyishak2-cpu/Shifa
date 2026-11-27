@@ -76,7 +76,7 @@ new=""" const submitPhoneAuth=async()=>{
     const data=await registerWithPhone(authPhone,authPassword,authName);
     setCustomer((v:any)=>({...v,name:authName.trim(),phone:authPhone}));
     if(data.session){setModal('');notify('تم إنشاء حسابك وتسجيل الدخول بنجاح');}
-    else notify('تم إنشاء الحساب. تأكد من إعداد تأكيد الهاتف في Supabase للسماح بالدخول بدون OTP.');
+    else notify('تم إنشاء الحساب. إذا لم تدخل تلقائيًا، يجب السماح بإنشاء الحساب دون تأكيد البريد في إعدادات Supabase؛ تسجيل الدخول هنا لا يستخدم SMS أو OTP.');
    }else{
     await loginWithPhone(authPhone,authPassword);
     setCustomer((v:any)=>({...v,phone:authPhone}));setModal('');notify('تم تسجيل الدخول بنجاح');
