@@ -106,27 +106,40 @@ jobs:
           git config --local --unset-all http.https://github.com/.extraheader || true
           git config --global --unset-all http.https://github.com/.extraheader || true
           git config --global --unset-all credential.interactive || true
-          for dependency in \
-            ionic-team/ion-ios-geolocation \
-            ionic-team/capacitor-swift-pm \
-            ionic-team/ion-ios-camera; do
-            echo "Checking public SwiftPM dependency: $dependency"
-            timeout 60 git ls-remote "https://github.com/$dependency.git" HEAD >/dev/null
-          done
+          python3 - <<'PY'
+          import os, subprocess
+          env = dict(os.environ, GIT_TERMINAL_PROMPT="0")
+          dependencies = [
+              "ionic-team/ion-ios-geolocation",
+              "ionic-team/capacitor-swift-pm",
+              "ionic-team/ion-ios-camera",
+          ]
+          for dependency in dependencies:
+              print(f"Checking public SwiftPM dependency: {dependency}", flush=True)
+              try:
+                  subprocess.run(
+                      ["git", "ls-remote", f"https://github.com/{dependency}.git", "HEAD"],
+                      check=True, stdout=subprocess.DEVNULL, timeout=60, env=env,
+                  )
+              except subprocess.TimeoutExpired:
+                  raise SystemExit(f"Timed out connecting to public SwiftPM dependency: {dependency}")
+          PY
       - name: Resolve iOS Swift packages
+        timeout-minutes: 8
         env:
           GIT_TERMINAL_PROMPT: '0'
         run: |
-          timeout 8m xcodebuild -resolvePackageDependencies \
+          xcodebuild -resolvePackageDependencies \
             -project ios/App/App.xcodeproj \
             -scheme App \
             -sdk iphonesimulator \
             -clonedSourcePackagesDirPath build/SourcePackages
       - name: Build iOS Simulator app
+        timeout-minutes: 10
         env:
           GIT_TERMINAL_PROMPT: '0'
         run: |
-          timeout 10m xcodebuild -project ios/App/App.xcodeproj \
+          xcodebuild -project ios/App/App.xcodeproj \
             -scheme App \
             -sdk iphonesimulator \
             -configuration Debug \
