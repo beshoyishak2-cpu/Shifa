@@ -37,7 +37,6 @@ jobs:
           python3 app-overlay/patch-auth.py
           python3 app-overlay/patch-auth-refresh.py
           python3 app-overlay/patch-saree-ops.py
-          python3 app-overlay/patch-role-preview.py
           python3 app-overlay/patch-support.py
           python3 app-overlay/patch-back-navigation.py
           python3 app-overlay/patch-customer-catalog.py
