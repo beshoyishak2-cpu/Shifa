@@ -117,8 +117,10 @@ create policy inventory_update_admin_or_merchant on public.product_inventory_bat
 create policy inventory_delete_admin_or_merchant on public.product_inventory_batches
  for delete to authenticated using(private.shifa_is_admin() or private.shifa_is_merchant_member(merchant_id));
 
-create policy delivery_zones_read_active on public.saree_delivery_zones
- for select to anon,authenticated using(is_active or private.shifa_is_admin() or private.shifa_is_merchant_member(merchant_id));
+create policy delivery_zones_anon_read_active on public.saree_delivery_zones
+ for select to anon using(is_active);
+create policy delivery_zones_authenticated_read on public.saree_delivery_zones
+ for select to authenticated using(is_active or private.shifa_is_admin() or private.shifa_is_merchant_member(merchant_id));
 create policy delivery_zones_manage_admin_or_merchant on public.saree_delivery_zones
  for all to authenticated using(private.shifa_is_admin() or private.shifa_is_merchant_member(merchant_id))
  with check(private.shifa_is_admin() or private.shifa_is_merchant_member(merchant_id));
