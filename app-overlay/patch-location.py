@@ -2,6 +2,20 @@ from pathlib import Path
 p=Path("src/App.tsx")
 s=p.read_text()
 
+# Prepare only the minimum contract required by later source transformations.
+# The full address and courier patch runs after every other App.tsx patch.
+if __import__("os").environ.get("SAREE_PREPARE_PATCH") == "1":
+    if "import LocationSystem from './LocationSystem';" not in s:
+        s="import LocationSystem from './LocationSystem';\\n"+s
+    if '<LocationSystem/>' not in s:
+        if "</header>" not in s: raise SystemExit("Cannot find app header insertion point")
+        s=s.replace("</header>","</header><LocationSystem/>",1)
+    if "deliveryMapUrl?:string" not in s:
+        s=s.replace("notes:string;driver?:string;prescriptionName?:string;pickup?:string;dropoff?:string};","notes:string;driver?:string;prescriptionName?:string;pickup?:string;dropoff?:string;deliveryMapUrl?:string};",1)
+    p.write_text(s)
+    print("Prepared LocationSystem component contract for remaining source patches.")
+    raise SystemExit(0)
+
 def replace_once(old: str, new: str, label: str):
     global s
     if old in s:
