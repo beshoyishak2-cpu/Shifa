@@ -57,7 +57,7 @@ if "createPortal(" not in app:
     app = app.replace("${searchKeyboardOpen?' keyboard-open':''}", "${searchKeyboardOpen?' keyboard-open':''}${dark?' dark':''}", 1)
 
 if "from 'react-dom'" not in app:
-    app = app.replace("from 'react';", "from 'react';\\nimport { createPortal } from 'react-dom';", 1)
+    app = app.replace("from 'react';", "from 'react';\nimport { createPortal } from 'react-dom';", 1)
 if "createPortal((" not in app or "document.body" not in app:
     raise SystemExit("Customer navigation was not moved into document.body")
 
