@@ -62,7 +62,7 @@ function AdvancedAdmin(){
  if(!admin)return <div style={css.wrap}>
  {!opened?<button style={css.trigger} onClick={()=>setOpened(true)}>البحث عن دواء بالصيدليات</button>:
  <section style={css.panel}><header style={css.head}><b>البحث عن توافر الدواء</b><button style={css.btn} onClick={()=>setOpened(false)}>إغلاق</button></header>
- <div style={css.body}><input style={css.input} placeholder="اسم الدواء أو المنتج" value={medicineQuery} onChange={e=>setMedicineQuery(e.target.value)}/>
+ <div style={css.body}>{msg&&<div style={css.card} role="status">{msg}</div>}<input style={css.input} placeholder="اسم الدواء أو المنتج" value={medicineQuery} onChange={e=>setMedicineQuery(e.target.value)}/>
  <input style={css.input} placeholder="المنطقة" value={medicineArea} onChange={e=>setMedicineArea(e.target.value)}/>
  {button(medicineBusy?'جارٍ البحث…':'ابحث في الصيدليات',()=>void run(searchPharmacyStock))}
  <div style={css.card}><span>النتائج تعرض الكميات المسجلة في دفعات بتاريخ صلاحية معلوم وغير منتهٍ فقط. توافر الدواء لا يغني عن استشارة الصيدلي.</span></div>
