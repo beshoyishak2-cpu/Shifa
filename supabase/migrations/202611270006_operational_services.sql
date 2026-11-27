@@ -305,3 +305,44 @@ end;
 $$;
 revoke all on function public.review_shifa_prescription(uuid,text,text) from public;
 grant execute on function public.review_shifa_prescription(uuid,text,text) to authenticated;
+
+
+-- Restrict prescription metadata and private object reads to the owner,
+-- administrators, or a verified pharmacist assigned to that exact pharmacy.
+drop policy if exists "prescriptions visible to owner pharmacist or admin" on public.pharmacy_prescriptions;
+drop policy if exists "prescriptions visible to owner verified pharmacist or admin" on public.pharmacy_prescriptions;
+create policy "prescriptions visible to owner verified pharmacist or admin"
+on public.pharmacy_prescriptions for select to authenticated
+using (
+  customer_id = auth.uid()
+  or public.shifa_is_admin()
+  or exists (
+    select 1 from public.pharmacist_profiles pp
+    where pp.user_id = auth.uid()
+      and pp.pharmacy_merchant_id = pharmacy_prescriptions.pharmacy_merchant_id
+      and pp.license_verified = true
+      and public.shifa_is_merchant_member(pp.pharmacy_merchant_id)
+  )
+);
+
+drop policy if exists "prescription owner pharmacist admin reads" on storage.objects;
+drop policy if exists "prescription owner verified pharmacist admin reads" on storage.objects;
+create policy "prescription owner verified pharmacist admin reads"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'prescriptions'
+  and (
+    (storage.foldername(name))[1] = auth.uid()::text
+    or public.shifa_is_admin()
+    or exists (
+      select 1
+      from public.pharmacy_prescriptions pp
+      join public.pharmacist_profiles fp
+        on fp.pharmacy_merchant_id = pp.pharmacy_merchant_id
+       and fp.user_id = auth.uid()
+       and fp.license_verified = true
+      where pp.storage_path = storage.objects.name
+        and public.shifa_is_merchant_member(pp.pharmacy_merchant_id)
+    )
+  )
+);
