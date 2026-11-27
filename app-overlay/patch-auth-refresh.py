@@ -19,6 +19,13 @@ if old_store_grid in s:
 elif new_store_grid not in s:
     raise SystemExit("Could not locate store grid for empty-state fix")
 
+old_customer_phone = "phone:profile.data?.phone||session.user.phone||v.phone"
+new_customer_phone = "phone:profile.data?.phone||session.user.user_metadata?.phone||session.user.phone||v.phone"
+if old_customer_phone in s:
+    s = s.replace(old_customer_phone, new_customer_phone, 1)
+elif new_customer_phone not in s:
+    raise SystemExit("Could not locate customer phone hydration")
+
 p.write_text(s)
 
 test_path = Path("tests/source-smoke.test.cjs")
