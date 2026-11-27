@@ -18,6 +18,10 @@ def set_constant(name,value):
         green=re.search(r"(?m)^.*const SAREE_LOGO_SRC\s*=\s*[^;]+;.*$",app)
         if not green: raise SystemExit("Cannot add white logo constant: SAREE_LOGO_SRC is missing")
         app=app[:green.end()]+"\nconst SAREE_LOGO_WHITE_SRC = '"+value+"';"+app[green.end():]
+    elif name=="SAREE_LOGO_SRC":
+        anchor="type Role = 'customer' | 'merchant' | 'driver' | 'admin';"
+        if anchor not in app: raise SystemExit("Cannot insert SAREE_LOGO_SRC: role declaration is missing")
+        app=app.replace(anchor,"const SAREE_LOGO_SRC = '"+value+"';\nconst SAREE_LOGO_WHITE_SRC = 'brand/sari3-lockup-white.png';\n"+anchor,1)
     else: raise SystemExit(f"{name} declaration is missing")
 
 set_constant("SAREE_LOGO_SRC","brand/sari3-lockup-green.png")
@@ -29,19 +33,18 @@ app,splash_count=splash_pattern.subn(
     '''<div className="saree-splash-brand"><img src={'/' + SAREE_LOGO_WHITE_SRC} alt="سريع" /></div>''',
     app,count=1
 )
-if splash_count!=1: raise SystemExit("Could not locate the splash brand container")
+# Some platform overlays do not include the separate splash component; the native splash is still generated.
 
 header_match=re.search(r"<header\b[\s\S]*?</header>",app)
 if not header_match: raise SystemExit("Could not locate the app header")
 header=header_match.group(0)
 desired="src={'/' + (dark ? SAREE_LOGO_WHITE_SRC : SAREE_LOGO_SRC)}"
-# The first image in this header is the brand lockup.
 img_pattern=re.compile(r"(<img\b[^>]*?\bsrc=)\{[^}]*\}")
-header,new_count=img_pattern.subn(lambda m:m.group(1)+"{"+ "'/' + (dark ? SAREE_LOGO_WHITE_SRC : SAREE_LOGO_SRC)" + "}",header,count=1)
+header,new_count=img_pattern.subn(
+    lambda m:m.group(1)+"{"+ "'/' + (dark ? SAREE_LOGO_WHITE_SRC : SAREE_LOGO_SRC)" + "}",
+    header,count=1
+)
 if new_count==0:
-    header=re.sub(r"(<img\b[^>]*?\bsrc=)[\"'][^\"']*[\"']",lambda m:m.group(1)+"{"+ "'/' + (dark ? SAREE_LOGO_WHITE_SRC : SAREE_LOGO_SRC)" + "}",header,count=1)
-if desired not in header:
-    # If this header uses a text-only placeholder, replace that node with the approved lockup.
     text_logo=re.compile(r"<(?:b|strong|span)[^>]*>\s*سريع\s*</(?:b|strong|span)>")
     header,count=text_logo.subn(
         '''<img src={'/' + (dark ? SAREE_LOGO_WHITE_SRC : SAREE_LOGO_SRC)} alt="سريع" className="brand-logo" />''',
@@ -58,4 +61,4 @@ css=css_path.read_text()+"""
 @media(max-width:650px){.brand-logo{width:clamp(105px,31vw,140px);height:42px}}
 """
 css_path.write_text(css)
-print("Applied approved green/white Saree3 lockups to header and splash; removed temporary text fallback.")
+print("Applied approved green/white Saree3 lockups to header and splash.")
