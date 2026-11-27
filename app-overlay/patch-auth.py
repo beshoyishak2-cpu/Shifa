@@ -60,12 +60,7 @@ if 'const [authPassword,setAuthPassword]' not in s:
                    if 'authPhone' in line and 'useState' in line), None)
     if anchor is None:
         raise SystemExit('Could not locate existing authPhone useState declaration')
-    state = (
-        "\\n  const [authPassword,setAuthPassword]=useState('');"
-        "\\n  const [showAuthPassword,setShowAuthPassword]=useState(false);"
-        "\\n  const [authName,setAuthName]=useState('');"
-        "\\n  const [authMode,setAuthMode]=useState<'login'|'register'>('login');\\n"
-    )
+    state = chr(10) + "  const [authPassword,setAuthPassword]=useState('');" + chr(10) + "  const [showAuthPassword,setShowAuthPassword]=useState(false);" + chr(10) + "  const [authName,setAuthName]=useState('');" + chr(10) + "  const [authMode,setAuthMode]=useState<'login'|'register'>('login');" + chr(10)
     lines.insert(anchor + 1, state)
     s = ''.join(lines)
 
