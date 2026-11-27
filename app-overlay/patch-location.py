@@ -17,7 +17,7 @@ if '<LocationSystem/>' not in s:
 
 # The archive's original source may format or infer this type differently.
 import re
-s=re.sub(r"(type\\s+AddressDraft\\s*=\\s*\\{[^}]*landmark:string;)([^}]*\\};)",r"\\1unit?:string;\\2",s,count=1)
+s=re.sub(r"(type\s+AddressDraft\s*=\s*\{[^}]*landmark:string;)([^}]*\};)",r"\1unit?:string;\2",s,count=1)
 s=s.replace("landmark:selected.landmark||'',lat:selected.lat??null", "landmark:selected.landmark||'',unit:selected.unit||'',lat:selected.lat??null",1)
 s=s.replace("delivery_area,delivery_street,delivery_landmark,delivery_latitude", "delivery_area,delivery_street,delivery_landmark,delivery_unit_details,delivery_latitude",1)
 s=s.replace("[o.delivery_area,o.delivery_street,o.delivery_landmark].filter(Boolean)", "[o.delivery_area,o.delivery_street,o.delivery_landmark,o.delivery_unit_details].filter(Boolean)",1)
