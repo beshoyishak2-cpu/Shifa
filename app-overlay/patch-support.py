@@ -33,7 +33,7 @@ elif nav_new not in s:
     raise SystemExit("customer navigation anchor missing")
 
 page_anchor = " {role==='customer'&&tab==='profile'&&"
-page = """ {role==='customer'&&tab==='support'&&<><h1>الدعم والشكاوى</h1><section className="panel form-panel"><p className="muted">اكتب مشكلتك وسيراجعها فريق سريع. لا ترسل بيانات بطاقتك أو كلمات المرور.</p><label>موضوع الشكوى<input value={supportSubject} onChange={e=>setSupportSubject(e.target.value)} placeholder="مثال: مشكلة في طلب أو توصيل"/></label><label>التفاصيل<textarea value={supportMessage} onChange={e=>setSupportMessage(e.target.value)} placeholder="اشرح المشكلة ورقم الطلب إن وجد"/></label><button className="primary full" onClick={()=>void submitSupportTicket()}>إرسال الشكوى</button></section><section className="panel"><h2>شكاواي السابقة</h2>{supportTickets.length===0?<Empty title="لا توجد شكاوى" hint="عند إرسال شكوى ستظهر حالتها هنا."/>:supportTickets.map(t=><article className="order-card" key={t.id}><b>{t.subject}</b><p>{t.message}</p><span className="status">{({open:'مفتوحة',in_progress:'قيد المتابعة',resolved:'تم الحل',closed:'مغلقة'} as any)[t.status]||'مفتوحة'}</span><small>{new Date(t.created_at).toLocaleString('ar-EG')}</small></article>)}</section></>}
+page = """ {role==='customer'&&tab==='support'&&<><h1>الدعم والشكاوى</h1><section className="panel form-panel"><p className="muted">اكتب مشكلتك وسيراجعها فريق سريع. لا ترسل بيانات بطاقتك أو كلمات المرور.</p><button className="outline full" onClick={()=>{setSupportSubject('طلب حذف الحساب والبيانات');setSupportMessage('أطلب حذف حسابي وجميع البيانات المرتبطة به. رقم الهاتف المسجل: '+(signedInPhone||''));}}>طلب حذف الحساب والبيانات</button><label>موضوع الشكوى<input value={supportSubject} onChange={e=>setSupportSubject(e.target.value)} placeholder="مثال: مشكلة في طلب أو توصيل"/></label><label>التفاصيل<textarea value={supportMessage} onChange={e=>setSupportMessage(e.target.value)} placeholder="اشرح المشكلة ورقم الطلب إن وجد"/></label><button className="primary full" onClick={()=>void submitSupportTicket()}>إرسال الشكوى</button></section><section className="panel"><h2>شكاواي السابقة</h2>{supportTickets.length===0?<Empty title="لا توجد شكاوى" hint="عند إرسال شكوى ستظهر حالتها هنا."/>:supportTickets.map(t=><article className="order-card" key={t.id}><b>{t.subject}</b><p>{t.message}</p><span className="status">{({open:'مفتوحة',in_progress:'قيد المتابعة',resolved:'تم الحل',closed:'مغلقة'} as any)[t.status]||'مفتوحة'}</span><small>{new Date(t.created_at).toLocaleString('ar-EG')}</small></article>)}</section></>}
 """
 if page_anchor in s:
     s = s.replace(page_anchor, page + page_anchor, 1)
@@ -69,6 +69,12 @@ panel.write_text(q)
 test_path = Path("tests/source-smoke.test.cjs")
 if test_path.exists():
     t = test_path.read_text()
+    if "in-app account deletion request is discoverable" not in t:
+        t += """
+test('in-app account deletion request is discoverable', () => {
+  assert.ok(app().includes('طلب حذف الحساب والبيانات'));
+});
+"""
     if "customer support tickets are submitted and listed" not in t:
         t += """
 test('customer support tickets are submitted and listed', () => {
