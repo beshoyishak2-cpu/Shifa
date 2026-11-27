@@ -152,6 +152,11 @@ begin
  if tg_op='INSERT' then v_new:=to_jsonb(new); v_id:=coalesce(v_new->>'id',v_new->>'user_id'); 
  elsif tg_op='UPDATE' then v_old:=to_jsonb(old); v_new:=to_jsonb(new); v_id:=coalesce(v_new->>'id',v_new->>'user_id');
  else v_old:=to_jsonb(old); v_id:=coalesce(v_old->>'id',v_old->>'user_id'); end if;
+ -- Keep audit records useful without copying customer contact details or precise delivery coordinates.
+ if tg_table_name='orders' then
+   v_old:=case when v_old is null then null else v_old-'customer_phone'-'customer_name'-'delivery_latitude'-'delivery_longitude'-'delivery_map_url' end;
+   v_new:=case when v_new is null then null else v_new-'customer_phone'-'customer_name'-'delivery_latitude'-'delivery_longitude'-'delivery_map_url' end;
+ end if;
  insert into public.saree_audit_events(actor_id,table_name,record_id,action,old_data,new_data)
  values(auth.uid(),tg_table_name,v_id,tg_op,v_old,v_new);
  if tg_op='DELETE' then return old; else return new; end if;
