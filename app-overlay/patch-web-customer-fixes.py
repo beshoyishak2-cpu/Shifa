@@ -53,6 +53,8 @@ app=app.replace("as {id:Service;label:string;emoji:string}[]).map(x=><button","a
 app=app.replace("<span>{x.emoji}</span>{x.label}</button>)}</div>","<span>{x.icon==='all'?<SareeInlineIcon name=\"all\"/>:x.icon==='restaurant'?<SareeInlineIcon name=\"restaurant\"/>:x.icon==='scooter'?<SareeInlineIcon name=\"scooter\"/>:x.icon==='cafe'?<SareeInlineIcon name=\"sparkle\"/>:x.icon==='grocery'?<SareeInlineIcon name=\"bag\"/>:<SareeInlineIcon name=\"sparkle\"/>}</span>{x.label}</button>)}</div>",1)
 # Search suggestion emoji array rendered as raw text: replace it with icon component elements.
 app=app.replace("{['🍽️','💊','🛒','🥬'][i]} {term}","{i===0?<SareeInlineIcon name=\"restaurant\" size={16}/>:<SareeInlineIcon name=\"bag\" size={16}/>} {term}")
+# STORE_TYPES.icon is a symbolic data field; keep a stable icon key instead of a glyph.
+app=app.replace("icon:'🍽️'","icon:'restaurant'")
 app_path.write_text(app)
 
 # Add a customer-only root class so the bottom navigation can reserve page space.
@@ -186,6 +188,9 @@ test('welcome artwork is inline and customer navigation is fixed on every viewpo
   assert.ok(!source.includes('>✦</i>'));
   assert.ok(!source.includes('>🛵</span>'));
   assert.ok(!source.includes('<span>←</span>'));
+  assert.ok(!source.includes('🏡'));
+  assert.ok(!source.includes('✨'));
+  assert.ok(!source.includes('🍽️'));
   assert.ok(css.includes('env(safe-area-inset-bottom,0px)'));
 });
 test('delivery location indicator is inline SVG rather than an emoji glyph', () => {
