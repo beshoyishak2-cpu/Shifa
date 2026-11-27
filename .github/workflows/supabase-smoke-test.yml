@@ -36,10 +36,9 @@ jobs:
       - name: Read all active launch categories through Supabase Data API
         env:
           SUPABASE_URL: https://qfweejmqooojsedsypen.supabase.co
-          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_a8Ys0LNdf7UcT6c6lH1KOg_gkXb0X_i
         run: |
           set -euo pipefail
-          test -n "$SUPABASE_PUBLISHABLE_KEY"
           curl --fail --silent --show-error \
             "$SUPABASE_URL/rest/v1/categories?select=id,name_ar,slug,sort_order&is_active=eq.true&order=sort_order.asc" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
