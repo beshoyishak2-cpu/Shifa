@@ -52,6 +52,7 @@ jobs:
           SAREE_FINAL_PATCH=1 python3 app-overlay/patch-location.py # finalize courier address handoff
           python3 app-overlay/patch-web-customer-fixes.py
           python3 app-overlay/patch-city-spelling.py
+          python3 app-overlay/patch-brand-logo.py
       - name: Preserve patched source for integration review
         uses: actions/upload-artifact@v4
         with:
@@ -98,6 +99,11 @@ jobs:
       - name: Verify city spelling in web bundle
         run: |
           if grep -R -n 'ملوي' dist; then echo 'Incorrect city spelling remains in dist'; exit 1; fi
+      - name: Verify approved brand assets in web bundle
+        run: |
+          test -s dist/brand/sari3-icon.png
+          test -s dist/brand/sari3-lockup-white.png
+          test -s dist/brand/sari3-lockup-green.png
       - name: Configure Capacitor Android
         run: |
           rm -f capacitor.config.ts capacitor.config.js capacitor.config.mjs
@@ -110,6 +116,17 @@ jobs:
           }
           EOF
       - run: npx cap add android
+      - name: Install Pillow and generate native brand assets
+        run: |
+          python3 -m pip install --user Pillow
+          python3 app-overlay/generate-brand-icons.py
+          test -f android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          test -f android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          test -f android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          test -f android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          test -f android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          test -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          test -f android/app/src/main/res/drawable/splash.png
       - run: python3 app-overlay/patch-android-location-permissions.py
       - run: npx cap sync android
       - name: Set unique Google Play version
