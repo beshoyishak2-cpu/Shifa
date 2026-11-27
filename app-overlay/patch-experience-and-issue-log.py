@@ -161,7 +161,6 @@ hero_art=re.compile(r'<div className="hero-art"[^>]*>[\s\S]*?</div>')
 s,n=hero_art.subn('<div className="hero-art"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>',s,count=1)
 if n!=1: raise SystemExit("Could not replace home hero artwork with the approved-style SVG")
 # Keep the approved hero as the first focal card; remove the older duplicate promo/repeat strips.
-s=re.sub(r'<div className="saree-home-promo">[\s\S]*?</div>\s*<div className="saree-repeat-row">[\s\S]*?</div>\s*','',s,count=1)
 
 
 # Update the source smoke assertion to follow the approved SVG asset instead of the old inline placeholder.
