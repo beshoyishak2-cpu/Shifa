@@ -1,0 +1,22 @@
+from pathlib import Path
+p=Path('src/App.tsx'); s=p.read_text()
+def once(old,new,label):
+    global s
+    if s.count(old)!=1: raise SystemExit(f'{label}: expected one anchor, got {s.count(old)}')
+    s=s.replace(old,new,1)
+# Server identifiers and order provenance.
+s=s.replace('type AddressDraft = {name:string;', 'type AddressDraft = {id?:string;name:string;')
+s=s.replace('deliveryMapUrl?:string};','deliveryMapUrl?:string;serverBacked?:boolean;courierId?:string|null};',1)
+s=s.replace("[driverOnline,setDriverOnline]=useState(true),[doctorSearch", "[driverOnline,setDriverOnline]=useState(false),[driverVerified,setDriverVerified]=useState(false),[activeMerchantId,setActiveMerchantId]=useState<string|null>(null),[doctorSearch")
+# Carry the persisted address UUID from LocationSystem into checkout.
+s=s.replace("setAddress({name:selected.label||'المنزل'", "setAddress({id:selected.id,name:selected.label||'المنزل'")
+# Account roles and memberships are read from the authenticated profile; local role switching is demo-only.
+old=" useEffect(()=>{if(!supabase)return;let alive=true;supabase.auth.getSession().then((result:{data:{session:Session|null}})=>{if(alive)setSignedInPhone(result.data.session?.user.phone??null)});const {data:{subscription}}=supabase.auth.onAuthStateChange((_event:string,session:Session|null)=>{setSignedInPhone(session?.user.phone??null);if(session?.user.id){void supabase!.from('profiles').select('role').eq('id',session.user.id).maybeSingle().then((result:{data:{role:string}|null})=>{if(result.data?.role)setRole(result.data.role as Role)});}});return()=>{alive=false;subscription.unsubscribe()};},[]);"
+new=""" useEffect(()=>{if(!supabase)return;let alive=true;const hydrate=async(session:Session|null)=>{setSignedInPhone(session?.user.phone??null);if(!session?.user.id){setRole('customer');setActiveMerchantId(null);setDriverVerified(false);setDriverOnline(false);return;}const [profile,membership,courier]=await Promise.all([supabase!.from('profiles').select('role,full_name,phone').eq('id',session.user.id).maybeSingle(),supabase!.from('merchant_members').select('merchant_id').eq('user_id',session.user.id).limit(1).maybeSingle(),supabase!.from('courier_profiles').select('is_verified,is_available').eq('user_id',session.user.id).maybeSingle()]);if(!alive)return;if(profile.data?.role)setRole(profile.data.role as Role);setCustomer(v=>({...v,name:profile.data?.full_name||v.name,phone:profile.data?.phone||session.user.phone||v.phone}));setActiveMerchantId(membership.data?.merchant_id||null);setDriverVerified(Boolean(courier.data?.is_verified));setDriverOnline(Boolean(courier.data?.is_verified&&courier.data?.is_available));};supabase.auth.getSession().then((r:{data:{session:Session|null}})=>void hydrate(r.data.session));const {data:{subscription}}=supabase.auth.onAuthStateChange((_event:string,session:Session|null)=>{void hydrate(session)});return()=>{alive=false;subscription.unsubscribe()};},[]);
+"""
+once(old,new,'auth hydration')
+# Load the real storefront catalog from Supabase.
+anchor=" useEffect(()=>save('cart',cart),[cart]);"
+catalog=""" useEffect(()=>{if(!supabase)return;let alive=true;(async()=>{const {data:merchantRows,error}=await supabase!.from('merchants').select('id,name,service_type,area_name,description,delivery_fee,min_order,eta,is_open,is_active').eq('is_active',true).eq('is_open',true).order('name');if(!alive)return;if(error){notify('تعذر تحميل المتاجر: '+error.message);return;}setStores((merchantRows||[]).map((m:any)=>({id:m.id,name:m.name,type:m.service_type,area:m.area_name||'ملوي',rating:4.5,eta:m.eta||'20–30 دقيقة',fee:Number(m.delivery_fee||0),min:Number(m.min_order||0),open:Boolean(m.is_open),desc:m.description||'',icon:STORE_TYPES[m.service_type]?.icon||'🛍️'})));const {data:productRows,error:productError}=await supabase!.from('products').select('id,merchant_id,name,description,price,is_available,unit,emoji,categories(name_ar)').eq('is_available',true).order('name');if(!alive)return;if(productError) {notify('تعذر تحميل المتاجر: '+productError.message);return;}setProducts((productRows||[]).map((x:any)=>({id:x.id,storeId:x.merchant_id,name:x.name,description:x.description||'',price:Number(x.price),unit:x.unit||'قطعة',emoji:x.emoji||'📦',category:x.categories?.name_ar||'عام',available:Boolean(x.is_available)})));})();return()=>{alive=false}},[]);
+"""
+what
