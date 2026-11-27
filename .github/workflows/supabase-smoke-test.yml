@@ -1,21 +1,45 @@
-name: Shifa Supabase connectivity check
+name: Shifa Supabase connectivity and migration checks
 on:
   push:
     branches: [main]
     paths:
       - '.github/workflows/supabase-smoke-test.yml'
       - 'app-overlay/**'
+      - 'supabase/migrations/**'
   workflow_dispatch:
 jobs:
   api-health:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - name: Validate unique ordered Supabase migration versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(supabase/migrations/*.sql)
+          test "${#files[@]}" -gt 0
+          versions=()
+          for file in "${files[@]}"; do
+            name="$(basename "$file")"
+            if [[ ! "$name" =~ ^([0-9]{14})_[a-z0-9_]+\.sql$ ]]; then
+              echo "Invalid migration filename: $name"
+              exit 1
+            fi
+            versions+=("${BASH_REMATCH[1]}")
+          done
+          duplicates="$(printf '%s\n' "${versions[@]}" | sort | uniq -d)"
+          if [[ -n "$duplicates" ]]; then
+            echo "Duplicate Supabase migration version(s): $duplicates"
+            exit 1
+          fi
+          printf 'Validated %s uniquely versioned migrations.\n' "${#versions[@]}"
       - name: Read all active launch categories through Supabase Data API
         env:
           SUPABASE_URL: https://qfweejmqooojsedsypen.supabase.co
-          SUPABASE_PUBLISHABLE_KEY: sb_publishable_a8Ys0LNdf7UcT6c6lH1KOg_gkXb0X_i
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
           set -euo pipefail
+          test -n "$SUPABASE_PUBLISHABLE_KEY"
           curl --fail --silent --show-error \
             "$SUPABASE_URL/rest/v1/categories?select=id,name_ar,slug,sort_order&is_active=eq.true&order=sort_order.asc" \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
