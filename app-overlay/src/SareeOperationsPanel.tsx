@@ -49,6 +49,12 @@ function SareeOperationsPanel() {
   const [wallet, setWallet] = useState<Row | null>(null);
   const [walletAmounts, setWalletAmounts] = useState<Record<string, string>>({});
   const [adminCustomers, setAdminCustomers] = useState<Row[]>([]);
+  const [adminDrivers, setAdminDrivers] = useState<Row[]>([]);
+  const [adminMerchants, setAdminMerchants] = useState<Row[]>([]);
+  const [adminOrders, setAdminOrders] = useState<Row[]>([]);
+  const [adminProducts, setAdminProducts] = useState<Row[]>([]);
+  const [adminWallets, setAdminWallets] = useState<Row[]>([]);
+  const [adminTransactions, setAdminTransactions] = useState<Row[]>([]);
   const [walletCredit, setWalletCredit] = useState({ customer_id: '', amount: '', note: '' });
   const [driverAccount, setDriverAccount] = useState<Row | null>(null);
   const [driverProfile, setDriverProfile] = useState<Row | null>(null);
@@ -82,6 +88,22 @@ function SareeOperationsPanel() {
     ]);
     setApplications(a.data || []); setReceipts(p.data || []); setSettlements(s.data || []); setSupportTickets(tickets.data || []); setOrders(o.data || []); setMyOrders(mine.data || []);
     setWallet(w.data); setDriverAccount(d.data); setDriverProfile(driver.data); setAdminCustomers(customers.data || []); if (!walletCredit.customer_id && customers.data?.length) setWalletCredit(v => ({ ...v, customer_id: customers.data[0].id })); if (settings.data) setAppSettings(settings.data); if (fees.data) setCommission(fees.data);
+    if (currentRole === 'admin') {
+      const [drivers, merchants, allOrders, products, wallets, transactions] = await Promise.all([
+        db.from('profiles').select('id,full_name,phone,created_at').eq('role','driver').order('created_at',{ascending:false}).limit(200),
+        db.from('merchants').select('*').order('created_at',{ascending:false}).limit(200),
+        db.from('orders').select('id,total,status,payment_status,payment_method,created_at,customer_id,merchant_id,courier_id').order('created_at',{ascending:false}).limit(300),
+        db.from('products').select('id,name,price,is_available,merchant_id,created_at').order('created_at',{ascending:false}).limit(300),
+        db.from('wallet_accounts').select('customer_id,balance,updated_at').order('updated_at',{ascending:false}).limit(300),
+        db.from('wallet_transactions').select('id,customer_id,direction,amount,transaction_type,note,created_at').order('created_at',{ascending:false}).limit(300)
+      ]);
+      for (const [name,result] of Object.entries({drivers,merchants,allOrders,products,wallets,transactions})) if ((result as any).error) throw (result as any).error;
+      const driverIds = (drivers.data || []).map((x:any)=>x.id);
+      const courierRows = driverIds.length ? await db.from('courier_profiles').select('user_id,vehicle_type,is_available,is_verified,locked_for_settlement').in('user_id',driverIds) : {data:[] as Row[],error:null};
+      if (courierRows.error) throw courierRows.error;
+      setAdminDrivers((drivers.data || []).map((x:any)=>({...x,courier:(courierRows.data || []).find((c:any)=>c.user_id===x.id) || null})));
+      setAdminMerchants(merchants.data || []); setAdminOrders(allOrders.data || []); setAdminProducts(products.data || []); setAdminWallets(wallets.data || []); setAdminTransactions(transactions.data || []);
+    }
   }
 
   useEffect(() => {
@@ -196,6 +218,23 @@ function SareeOperationsPanel() {
     const { error } = await db.rpc('saree_submit_order_payment', { p_order_id: id, p_method: paymentMethod, p_receipt_path: path });
     if (error) throw error; await load(); say('تم إرسال الإيصال، والطلب ينتظر مراجعة الإدارة.');
   }
+  async function setCourierVerified(id: string, verified: boolean) {
+    if (!db) return; const { error } = await db.from('courier_profiles').update({ is_verified: verified, ...(verified ? {} : {is_available:false}) }).eq('user_id', id);
+    if (error) throw error; await load(); say(verified ? 'تم توثيق المندوب.' : 'تم إلغاء توثيق المندوب وإيقاف استقباله للطلبات.');
+  }
+  async function setMerchantActive(id: string, active: boolean) {
+    if (!db) return; const { error } = await db.from('merchants').update({ is_active: active }).eq('id', id);
+    if (error) throw error; await load(); say(active ? 'تم تفعيل المتجر.' : 'تم إيقاف المتجر.');
+  }
+  async function setProductAvailable(id: string, available: boolean) {
+    if (!db) return; const { error } = await db.from('products').update({ is_available: available }).eq('id', id);
+    if (error) throw error; await load(); say(available ? 'تم إظهار المنتج.' : 'تم إخفاء المنتج.');
+  }
+  async function adminChangeOrderStatus(id: string, next: string) {
+    if (!db) return; const { error } = await db.rpc('transition_shifa_order', { p_order_id: id, p_next_status: next });
+    if (error) throw error; await load(); say('تم تحديث حالة الطلب من لوحة الإدارة.');
+  }
+
   async function savePaymentSettings() {
     if (!db) return;
     const { error } = await db.rpc('saree_admin_update_payment_settings', { p_wallet_enabled: !!appSettings.mobile_wallet_enabled, p_instapay_enabled: !!appSettings.instapay_enabled, p_transfer_phone: appSettings.transfer_phone });
@@ -231,7 +270,7 @@ function SareeOperationsPanel() {
     <section style={styles.panel}>
       <header style={styles.top}><div><b>سريع | مركز العمليات</b><div style={styles.muted}>{role === 'admin' ? 'لوحة الإدارة' : role === 'driver' ? 'حساب المندوب' : 'حساب العميل'}</div></div><button style={{ ...styles.button, background: '#dcece6', color: '#185046' }} onClick={() => setOpen(false)}>إغلاق</button></header>
       <div style={styles.body}>
-        <div style={styles.row}>{btn('تحديث', () => void run(load), true)}{role === 'customer' && btn('انضم كشريك', () => setTab(tab === 'partner' ? 'main' : 'partner'), true)}{role === 'admin' && ['applications','receipts','settlements','support','settings'].map(t => btn(({applications:'طلبات الانضمام',receipts:'إيصالات الدفع',settlements:'التوريد',support:'شكاوى العملاء',settings:'الإعدادات'} as any)[t], () => setTab(t), tab !== t))}</div>
+        <div style={styles.row}>{btn('تحديث', () => void run(load), true)}{role === 'customer' && btn('انضم كشريك', () => setTab(tab === 'partner' ? 'main' : 'partner'), true)}{role === 'admin' && ['customers','drivers','merchants','orders','products','finance','reports','applications','receipts','settlements','support','settings'].map(t => btn(({customers:'العملاء',drivers:'المندوبون',merchants:'التجار',orders:'الطلبات',products:'المنتجات',finance:'المدفوعات والمحافظ',reports:'التقارير',applications:'طلبات الانضمام',receipts:'إيصالات الدفع',settlements:'التوريد',support:'الشكاوى',settings:'الإعدادات'} as any)[t], () => setTab(t), tab !== t))}</div>
         {message && <div role="status" style={{ ...styles.card, color: '#145b45' }}>{message}</div>}
         {tab === 'partner' && role === 'customer' && <div style={styles.card}>
           <b>طلب انضمام كشريك</b>
@@ -244,6 +283,13 @@ function SareeOperationsPanel() {
           <label style={{ display: 'grid', gap: 4, fontSize: 12 }}>المستندات المطلوبة<input style={styles.input} type="file" multiple accept="image/*,.pdf" onChange={e => setDocs(e.target.files)} /></label>
           {btn('إرسال طلب الانضمام', () => void run(submitPartner))}
         </div>}
+        {role === 'admin' && tab === 'customers' && <><b>إدارة العملاء ({adminCustomers.length})</b>{adminCustomers.map(c => <article style={styles.card} key={c.id}><b>{c.full_name || 'عميل بدون اسم'}</b><span>{c.phone || 'لا يوجد هاتف'}</span><span style={styles.muted}>رقم الحساب: {c.id}</span><span>رصيد المحفظة: {money(adminWallets.find(w=>w.customer_id===c.id)?.balance || 0)}</span></article>)}</>}
+        {role === 'admin' && tab === 'drivers' && <><b>إدارة المندوبين ({adminDrivers.length})</b>{adminDrivers.map(d => <article style={styles.card} key={d.id}><b>{d.full_name || 'مندوب بدون اسم'}</b><span>{d.phone || 'لا يوجد هاتف'} · {d.courier?.vehicle_type || 'المركبة غير محددة'}</span><span>التوثيق: {d.courier?.is_verified ? 'موثق' : 'غير موثق'} · التوفر: {d.courier?.is_available ? 'متاح' : 'غير متاح'} · التوريد: {d.courier?.locked_for_settlement ? 'موقوف' : 'طبيعي'}</span>{btn(d.courier?.is_verified ? 'إلغاء التوثيق' : 'توثيق المندوب', () => void run(() => setCourierVerified(d.id,!d.courier?.is_verified)), !d.courier?.is_verified)}</article>)}</>}
+        {role === 'admin' && tab === 'merchants' && <><b>إدارة التجار والصيدليات ({adminMerchants.length})</b>{adminMerchants.map(m => <article style={styles.card} key={m.id}><b>{m.name}</b><span>{m.phone || 'لا يوجد هاتف'} · {m.address || 'لا يوجد عنوان'}</span><span>رسوم التوصيل: {money(m.delivery_fee)} · العمولة: {m.commission_percent}%</span><span>الحالة: {m.is_active ? 'نشط' : 'متوقف'}</span>{btn(m.is_active ? 'إيقاف المتجر' : 'تفعيل المتجر', () => void run(() => setMerchantActive(m.id,!m.is_active)), !m.is_active)}</article>)}</>}
+        {role === 'admin' && tab === 'orders' && <><b>إدارة الطلبات ({adminOrders.length})</b>{adminOrders.map(o => <article style={styles.card} key={o.id}><b>{money(o.total)} · {o.status}</b><span>طلب: {o.id}</span><span>العميل: {o.customer_id} · المتجر: {adminMerchants.find(m=>m.id===o.merchant_id)?.name || o.merchant_id}</span><span>الدفع: {o.payment_status || 'غير محدد'} · {new Date(o.created_at).toLocaleString('ar-EG')}</span><select style={styles.input} defaultValue={o.status} id={'admin-order-'+o.id}><option value='pending'>جديد</option><option value='accepted'>مقبول</option><option value='preparing'>قيد التجهيز</option><option value='ready_for_pickup'>جاهز للاستلام</option><option value='picked_up'>تم الاستلام</option><option value='delivered'>تم التسليم</option><option value='cancelled'>ملغي</option></select>{btn('حفظ حالة الطلب', () => {const el=document.getElementById('admin-order-'+o.id) as HTMLSelectElement;void run(()=>adminChangeOrderStatus(o.id,el.value));})}</article>)}</>}
+        {role === 'admin' && tab === 'products' && <><b>إدارة المنتجات ({adminProducts.length})</b>{adminProducts.map(p => <article style={styles.card} key={p.id}><b>{p.name}</b><span>{money(p.price)} · المتجر: {adminMerchants.find(m=>m.id===p.merchant_id)?.name || p.merchant_id}</span><span>الحالة: {p.is_available ? 'متاح' : 'مخفي'}</span>{btn(p.is_available ? 'إخفاء المنتج' : 'إظهار المنتج', () => void run(() => setProductAvailable(p.id,!p.is_available)), !p.is_available)}</article>)}</>}
+        {role === 'admin' && tab === 'finance' && <><b>المدفوعات والمحافظ</b><div style={styles.card}><b>حسابات المحافظ ({adminWallets.length})</b>{adminWallets.map(w=><div key={w.customer_id}>{adminCustomers.find(c=>c.id===w.customer_id)?.full_name || w.customer_id}: {money(w.balance)}</div>)}</div><div style={styles.card}><b>آخر حركات المحفظة ({adminTransactions.length})</b>{adminTransactions.map(t=><div key={t.id} style={{borderBottom:'1px solid #e0ece7',padding:'5px 0'}}>{t.direction==='credit'?'إضافة':'خصم'} · {money(t.amount)} · {t.transaction_type} · {new Date(t.created_at).toLocaleString('ar-EG')}</div>)}</div><div style={styles.card}><b>إيصالات الدفع المعلقة: {receipts.length}</b><b>طلبات التوريد المعلقة: {settlements.length}</b><span style={styles.muted}>راجع تبويبي «إيصالات الدفع» و«التوريد» لاتخاذ إجراء على كل عملية.</span></div></>}
+        {role === 'admin' && tab === 'reports' && <><b>تقارير وإحصائيات التشغيل</b><div style={styles.card}><b>العملاء</b><strong style={{fontSize:22}}>{adminCustomers.length}</strong></div><div style={styles.card}><b>المندوبون</b><strong style={{fontSize:22}}>{adminDrivers.length}</strong><span>الموثقون: {adminDrivers.filter(d=>d.courier?.is_verified).length}</span></div><div style={styles.card}><b>التجار والصيدليات</b><strong style={{fontSize:22}}>{adminMerchants.length}</strong><span>النشطة: {adminMerchants.filter(m=>m.is_active).length}</span></div><div style={styles.card}><b>الطلبات المحملة (آخر 300)</b><strong style={{fontSize:22}}>{adminOrders.length}</strong><span>المكتملة: {adminOrders.filter(o=>o.status==='delivered').length} · الملغاة: {adminOrders.filter(o=>o.status==='cancelled').length} · المفتوحة: {adminOrders.filter(o=>!['delivered','cancelled'].includes(o.status)).length}</span><span>إجمالي قيمة الطلبات المحملة: {money(adminOrders.reduce((sum,o)=>sum+Number(o.total||0),0))}</span></div><div style={styles.card}><b>المنتجات</b><strong style={{fontSize:22}}>{adminProducts.length}</strong><span>المتاحة: {adminProducts.filter(p=>p.is_available).length}</span></div></>}
         {role === 'admin' && tab === 'applications' && <><b>طلبات الانضمام الجديدة ({applications.length})</b>{applications.map(a => <article style={styles.card} key={a.id}><b>{a.display_name} · {a.application_type === 'driver' ? 'مندوب' : a.business_type}</b><span>{a.phone} · {a.area_name}</span><span style={styles.muted}>{a.address || a.vehicle_type || ''}</span><div style={styles.row}>{(a.document_paths || []).map((p: string) => btn('عرض مستند', () => void run(() => openPrivateFile('partner-documents', p)), true))}</div><div style={styles.row}>{btn('قبول وتفعيل', () => void run(() => reviewApplication(a.id, true)))}{btn('رفض', () => void run(() => reviewApplication(a.id, false)), true)}</div></article>)}</>}
         {role === 'admin' && tab === 'receipts' && <><b>إيصالات الدفع المعلقة ({receipts.length})</b>{receipts.map(r => <article style={styles.card} key={r.id}><b>{money(r.amount)} · {r.payment_method === 'instapay' ? 'إنستا باي' : 'محفظة إلكترونية'}</b><span>الطلب: {r.order_id}</span><div style={styles.row}>{btn('عرض الإيصال', () => void run(() => openPrivateFile('payment-receipts', r.storage_path)), true)}{btn('تأكيد استلام المبلغ', () => void run(() => reviewReceipt(r.id, true)))}{btn('رفض الإيصال', () => void run(() => reviewReceipt(r.id, false)), true)}</div></article>)}</>}
         {role === 'admin' && tab === 'settlements' && <><b>طلبات التوريد ({settlements.length})</b>{settlements.map(s => <article style={styles.card} key={s.id}><b>{money(s.amount)}</b><span>المندوب: {s.courier_id}</span><div style={styles.row}>{s.receipt_path && btn('عرض الإيصال', () => void run(() => openPrivateFile('payment-receipts', s.receipt_path)), true)}{btn('تأكيد استلام التوريد', () => void run(() => confirmSettlement(s.id)))}</div></article>)}</>}
