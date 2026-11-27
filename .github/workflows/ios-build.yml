@@ -5,6 +5,7 @@ on:
     paths:
       - 'Shifa-MVP-Project(2).zip'
       - 'app-overlay/**'
+      - 'supabase/migrations/**'
       - '.github/workflows/ios-build.yml'
   workflow_dispatch:
 jobs:
