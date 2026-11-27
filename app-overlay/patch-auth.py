@@ -1,0 +1,69 @@
+from pathlib import Path
+p=Path('src/lib/backend.ts')
+s=p.read_text()
+start=s.index('export async function requestPhoneOtp')
+end=s.index('export async function listActiveMerchants')
+new='''function normalizeEgyptianPhone(phone: string) {
+  const value = phone.replace(/[\\s()-]/g, '');
+  if (value.startsWith('+')) return value;
+  if (value.startsWith('0020')) return `+${value.slice(2)}`;
+  if (value.startsWith('20')) return `+${value}`;
+  if (value.startsWith('0')) return `+2${value}`;
+  return value;
+}
+
+export async function registerWithPhone(phone: string, password: string, fullName: string) {
+  if (!supabase || !backendReady) throw new Error('خدمة التسجيل غير متاحة حاليًا');
+  const { data, error } = await supabase.auth.signUp({
+    phone: normalizeEgyptianPhone(phone),
+    password,
+    options: { data: { full_name: fullName.trim() } }
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function loginWithPhone(phone: string, password: string) {
+  if (!supabase || !backendReady) throw new Error('خدمة تسجيل الدخول غير متاحة حاليًا');
+  const { data, error } = await supabase.auth.signInWithPassword({
+    phone: normalizeEgyptianPhone(phone),
+    password
+  });
+  if (error) throw error;
+  return data;
+}
+
+'''
+if 'requestPhoneOtp' not in s: raise SystemExit('OTP backend functions not found')
+p.write_text(s[:start]+new+s[end:])
+
+p=Path('src/App.tsx')
+s=p.read_text()
+s=s.replace("import { requestPhoneOtp, verifyPhoneOtp } from './lib/backend';", "import { registerWithPhone, loginWithPhone } from './lib/backend';")
+s=s.replace("[authPhone,setAuthPhone]=useState(''),[authCode,setAuthCode]=useState(''),[otpSent,setOtpSent]=useState(false),[signedInPhone,setSignedInPhone]=useState<string|null>(null);", "[authPhone,setAuthPhone]=useState(''),[authPassword,setAuthPassword]=useState(''),[authName,setAuthName]=useState(''),[authMode,setAuthMode]=useState<'login'|'register'>('login'),[signedInPhone,setSignedInPhone]=useState<string|null>(null);")
+old=""" const sendOtp=async()=>{try{await requestPhoneOtp(authPhone);setOtpSent(true);notify('تم إرسال رمز التحقق إلى هاتفك');}catch(e){notify(e instanceof Error?e.message:'تعذر إرسال رمز التحقق');}};
+ const confirmOtp=async()=>{try{await verifyPhoneOtp(authPhone,authCode);setModal('');notify('تم تسجيل الدخول بنجاح');}catch(e){notify(e instanceof Error?e.message:'رمز التحقق غير صحيح');}};"""
+new=""" const submitPhoneAuth=async()=>{
+  const phone=authPhone.replace(/[\\s()-]/g,'');
+  if(!/^01[0125][0-9]{8}$/.test(phone) && !/^\\+?20?1[0125][0-9]{8}$/.test(phone)){notify('اكتب رقم موبايل مصري صحيح');return;}
+  if(authPassword.length<8){notify('كلمة المرور يجب ألا تقل عن 8 أحرف');return;}
+  try{
+   if(authMode==='register'){
+    if(!authName.trim()){notify('اكتب اسمك');return;}
+    const data=await registerWithPhone(authPhone,authPassword,authName);
+    setCustomer((v:any)=>({...v,name:authName.trim(),phone:authPhone}));
+    if(data.session){setModal('');notify('تم إنشاء حسابك وتسجيل الدخول بنجاح');}
+    else notify('تم إنشاء الحساب. تأكد من إعداد تأكيد الهاتف في Supabase للسماح بالدخول بدون OTP.');
+   }else{
+    await loginWithPhone(authPhone,authPassword);
+    setCustomer((v:any)=>({...v,phone:authPhone}));setModal('');notify('تم تسجيل الدخول بنجاح');
+   }
+  }catch(e){notify(e instanceof Error?e.message:'تعذر إتمام العملية. راجع رقم الهاتف وكلمة المرور.');}
+ };"""
+if old not in s: raise SystemExit('OTP handlers block not found')
+s=s.replace(old,new)
+old=""" {modal==='login'&&<div className="overlay" onClick={()=>setModal('')}><div className="dialog" onClick={e=>e.stopPropagation()}><button className="close" onClick={()=>setModal('')}><X/></button><h2>تسجيل الدخول برقم الهاتف</h2><p className="muted">سيصلك رمز تحقق SMS من مشروع شفاء المرتبط.</p><label>رقم الهاتف<input inputMode="tel" value={authPhone} onChange={e=>setAuthPhone(e.target.value)} placeholder="+201xxxxxxxxx"/></label>{otpSent&&<label>رمز التحقق<input inputMode="numeric" value={authCode} onChange={e=>setAuthCode(e.target.value)} placeholder="123456"/></label>}<button className="primary full" onClick={otpSent?confirmOtp:sendOtp}>{otpSent?'تأكيد الرمز':'إرسال رمز التحقق'}</button></div></div>}"""
+new=""" {modal==='login'&&<div className="overlay" onClick={()=>setModal('')}><div className="dialog" onClick={e=>e.stopPropagation()}><button className="close" onClick={()=>setModal('')}><X/></button><h2>{authMode==='register'?'إنشاء حساب جديد':'تسجيل الدخول'}</h2><p className="muted">استخدم رقم موبايلك وكلمة المرور. لا نستخدم رسائل SMS أو OTP.</p>{authMode==='register'&&<label>الاسم بالكامل<input value={authName} onChange={e=>setAuthName(e.target.value)} placeholder="اسمك"/></label>}<label>رقم الهاتف<input inputMode="tel" value={authPhone} onChange={e=>setAuthPhone(e.target.value)} placeholder="010xxxxxxxx"/></label><label>كلمة المرور<input type="password" autoComplete={authMode==='register'?'new-password':'current-password'} value={authPassword} onChange={e=>setAuthPassword(e.target.value)} placeholder="8 أحرف على الأقل"/></label><button className="primary full" onClick={submitPhoneAuth}>{authMode==='register'?'إنشاء الحساب':'دخول'}</button><button className="outline full" onClick={()=>setAuthMode(authMode==='register'?'login':'register')}>{authMode==='register'?'لديك حساب؟ سجل الدخول':'مستخدم جديد؟ أنشئ حسابًا'}</button></div></div>}"""
+if old not in s: raise SystemExit('OTP modal block not found')
+s=s.replace(old,new)
+p.write_text(s)
