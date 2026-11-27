@@ -65,7 +65,10 @@ effect=r"""
  },[role,tab,selectedStore]);
 """
 if 'const count=cart.reduce' not in s: raise SystemExit("issue log effect anchor missing")
-s=s[:start]+replacement+s[end:]
+if 'saree-issue-page' not in s:
+ anchor=' const count=cart.reduce'
+ if anchor not in s: raise SystemExit("issue log effect anchor missing")
+ s=s.replace(anchor,effect+'\\n'+anchor,1)
 s=s.replace("if 'SAREE3_FETCH_WRAPPED' not in s:\n anchor=' const count=cart.reduce'\n if anchor not in s: raise SystemExit('issue logger: effect anchor missing')\n s=s.replace(anchor,effect+'\\n'+anchor,1)","if 'saree-issue-page' not in s:\n anchor=' const count=cart.reduce'\n s=s.replace(anchor,effect+'\\n'+anchor,1)")
 page=r"""
  {tab==='issue-log'&&<section className="panel saree-issue-page" dir="rtl"><div className="section-title"><h2>سجل المشاكل</h2><button className="outline" onClick={()=>setTab('profile')}>رجوع</button></div>
