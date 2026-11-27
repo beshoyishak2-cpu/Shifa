@@ -94,7 +94,8 @@ function SareeOperationsPanel() {
 
   async function submitPartner() {
     if (!db || !uid) throw new Error('سجّل الدخول أولاً');
-    if (!appForm.display_name.trim() || !appForm.phone.trim()) throw new Error('أكمل الاسم ورقم الهاتف');\n    if (!docs?.length) throw new Error('ارفع المستندات المطلوبة قبل إرسال الطلب');
+    if (!appForm.display_name.trim() || !appForm.phone.trim()) throw new Error('أكمل الاسم ورقم الهاتف');
+    if (!docs?.length) throw new Error('ارفع المستندات المطلوبة قبل إرسال الطلب');
     const paths: string[] = [];
     for (const file of Array.from(docs || [])) paths.push(await upload('partner-documents', uid, file));
     const { error } = await db.from('partner_applications').insert({ ...appForm, applicant_id: uid, document_paths: paths, status: 'pending' });
@@ -141,7 +142,14 @@ function SareeOperationsPanel() {
     const { error } = await db.rpc('transition_shifa_order', { p_order_id: id, p_next_status: next });
     if (error) throw error; await load(); say('تم تحديث حالة الطلب.');
   }
-  async function toggleDriverAvailability() {\n    if (!db || !uid || !driverProfile?.is_verified) throw new Error('حساب المندوب غير موثق');\n    const next = !driverProfile.is_available;\n    const { data, error } = await db.from('courier_profiles').update({ is_available: next }).eq('user_id', uid).select('is_available,is_verified,locked_for_settlement').maybeSingle();\n    if (error || !data) throw error || new Error('تعذر تحديث حالة التوفر');\n    setDriverProfile(data); say(next ? 'أنت متاح لاستقبال الطلبات.' : 'تم إيقاف استقبال الطلبات.'); await load();\n  }\n  async function submitSettlement(file?: File) {
+  async function toggleDriverAvailability() {
+    if (!db || !uid || !driverProfile?.is_verified) throw new Error('حساب المندوب غير موثق');
+    const next = !driverProfile.is_available;
+    const { data, error } = await db.from('courier_profiles').update({ is_available: next }).eq('user_id', uid).select('is_available,is_verified,locked_for_settlement').maybeSingle();
+    if (error || !data) throw error || new Error('تعذر تحديث حالة التوفر');
+    setDriverProfile(data); say(next ? 'أنت متاح لاستقبال الطلبات.' : 'تم إيقاف استقبال الطلبات.'); await load();
+  }
+  async function submitSettlement(file?: File) {
     if (!db || !uid || !file) throw new Error('اختر صورة إيصال التوريد');
     const path = await upload('payment-receipts', uid, file);
     const { error } = await db.rpc('saree_driver_submit_settlement', { p_receipt_path: path });
