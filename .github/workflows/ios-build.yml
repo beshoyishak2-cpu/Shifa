@@ -46,6 +46,7 @@ jobs:
           SAREE_FINAL_PATCH=1 python3 app-overlay/patch-location.py # finalize courier address handoff
           python3 app-overlay/patch-city-spelling.py
           python3 app-overlay/patch-brand-logo.py
+          python3 app-overlay/patch-experience-and-issue-log.py
       - name: Upgrade Capacitor packages to v8
         run: |
           npm pkg set "dependencies.@capacitor/core=^8.0.0"
