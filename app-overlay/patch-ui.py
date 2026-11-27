@@ -60,6 +60,21 @@ html = html.replace('content="شفاء - خدمات وتوصيل محلي في �
 html = html.replace("<title>شفاء | Shifa - ملوي</title>", "<title>سريع - كل خدمات ملوي</title>")
 html_path.write_text(html)
 
+# Keep transient notifications clear of the fixed mobile navigation and device safe areas.
+css += """
+/* Notification bubbles: never hide behind the bottom navigation or screen edge. */
+.toast{bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:80;width:max-content;max-width:min(92vw,420px);min-width:0;white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.65;box-sizing:border-box}
+.toast svg{flex:none;width:18px;height:18px}
+@media(max-width:700px){.toast{bottom:calc(78px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 24px);padding:11px 14px;border-radius:14px}}
+"""
+css_path.write_text(css)
+
+# Announce notifications accessibly and keep long Arabic messages fully wrapped.
+app_path.write_text(app_path.read_text().replace(
+    '{toast&&<div className="toast"><CheckCircle2/> {toast}</div>}',
+    '{toast&&<div className="toast" role="status" aria-live="polite"><CheckCircle2/> <span>{toast}</span></div>}'
+))
+
 mobile = mobile_path.read_text().replace("طلب من شفاء", "طلب من سريع")
 mobile_path.write_text(mobile)
 
@@ -81,4 +96,19 @@ test('branded mobile UI has safe area, clean header, and image-ready store cards
 });
 """
 test_path.write_text(tests)
+if test_path.exists():
+    t = test_path.read_text()
+    if "mobile toast stays above navigation" not in t:
+        t += """
+test('mobile toast stays above navigation and wraps long Arabic messages', () => {
+  const app = fs.readFileSync(path.join(root, 'src/App.tsx'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'src/style.css'), 'utf8');
+  assert.ok(app.includes('role="status" aria-live="polite"'));
+  assert.ok(css.includes('bottom:calc(78px + env(safe-area-inset-bottom,0px))'));
+  assert.ok(css.includes('overflow-wrap:anywhere'));
+  assert.ok(css.includes('max-width:calc(100vw - 24px)'));
+});
+"""
+        test_path.write_text(t)
+
 print("Applied Jeylak UI patch.")
