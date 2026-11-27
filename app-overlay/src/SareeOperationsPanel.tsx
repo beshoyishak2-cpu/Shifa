@@ -195,7 +195,7 @@ function SareeOperationsPanel() {
   }
 
   const styles: Record<string, React.CSSProperties> = {
-    shell: { position: 'fixed', zIndex: 2147483001, left: 12, bottom: 'max(14px, env(safe-area-inset-bottom))', direction: 'rtl', fontFamily: 'inherit', color: '#183a34' },
+    shell: { position: 'fixed', zIndex: 2147483001, left: 12, bottom: 'max(88px, calc(env(safe-area-inset-bottom) + 84px))', direction: 'rtl', fontFamily: 'inherit', color: '#183a34' },
     trigger: { border: 0, borderRadius: 999, background: '#087f68', color: '#fff', padding: '12px 17px', fontWeight: 800, boxShadow: '0 7px 24px #052f2750' },
     panel: { width: 'min(420px, calc(100vw - 24px))', maxHeight: 'min(78dvh, 720px)', overflow: 'auto', background: '#fff', border: '1px solid #d8e8e2', borderRadius: 18, boxShadow: '0 14px 48px #052f2740' },
     top: { background: '#eaf7f2', padding: '13px 15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 2 },
