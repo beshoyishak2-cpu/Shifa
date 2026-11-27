@@ -40,7 +40,6 @@ function SareeOperationsPanel() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [applications, setApplications] = useState<Row[]>([]);
-  const [supportTickets, setSupportTickets] = useState<Row[]>([]);
   const [receipts, setReceipts] = useState<Row[]>([]);
   const [settlements, setSettlements] = useState<Row[]>([]);
   const [orders, setOrders] = useState<Row[]>([]);
@@ -77,9 +76,8 @@ function SareeOperationsPanel() {
       db.from('saree_app_settings').select('*').eq('id', true).maybeSingle(),
       currentRole === 'admin' ? db.from('saree_commission_settings').select('*').eq('id', true).maybeSingle() : Promise.resolve({ data: null as Row | null }),
       currentRole === 'admin' ? db.from('profiles').select('id,full_name,phone').eq('role','customer').order('full_name') : Promise.resolve({ data: [] as Row[] }),
-      currentRole === 'admin' ? db.from('support_tickets').select('id,customer_id,subject,message,status,created_at,profiles(full_name,phone)').order('created_at', { ascending: false }).limit(100) : Promise.resolve({ data: [] as Row[] })
     ]);
-    setApplications(a.data || []); setReceipts(p.data || []); setSettlements(s.data || []); setSupportTickets(tickets.data || []); setOrders(o.data || []); setMyOrders(mine.data || []);
+    setApplications(a.data || []); setReceipts(p.data || []); setSettlements(s.data || []); setOrders(o.data || []); setMyOrders(mine.data || []);
     setWallet(w.data); setDriverAccount(d.data); setDriverProfile(driver.data); setAdminCustomers(customers.data || []); if (!walletCredit.customer_id && customers.data?.length) setWalletCredit(v => ({ ...v, customer_id: customers.data[0].id })); if (settings.data) setAppSettings(settings.data); if (fees.data) setCommission(fees.data);
   }
 
@@ -220,7 +218,7 @@ function SareeOperationsPanel() {
     <section style={styles.panel}>
       <header style={styles.top}><div><b>سريع | مركز العمليات</b><div style={styles.muted}>{role === 'admin' ? 'لوحة الإدارة' : role === 'driver' ? 'حساب المندوب' : 'حساب العميل'}</div></div><button style={{ ...styles.button, background: '#dcece6', color: '#185046' }} onClick={() => setOpen(false)}>إغلاق</button></header>
       <div style={styles.body}>
-        <div style={styles.row}>{btn('تحديث', () => void run(load), true)}{role === 'customer' && btn('انضم كشريك', () => setTab(tab === 'partner' ? 'main' : 'partner'), true)}{role === 'admin' && ['applications','receipts','settlements','support','settings'].map(t => btn(({applications:'طلبات الانضمام',receipts:'إيصالات الدفع',settlements:'التوريد',support:'شكاوى العملاء',settings:'الإعدادات'} as any)[t], () => setTab(t), tab !== t))}</div>
+        <div style={styles.row}>{btn('تحديث', () => void run(load), true)}{role === 'customer' && btn('انضم كشريك', () => setTab(tab === 'partner' ? 'main' : 'partner'), true)}{role === 'admin' && ['applications','receipts','settlements'].map(t => btn(({applications:'طلبات الانضمام',receipts:'إيصالات الدفع',settlements:'التوريد',settings:'الإعدادات'} as any)[t], () => setTab(t), tab !== t))}</div>
         {message && <div role="status" style={{ ...styles.card, color: '#145b45' }}>{message}</div>}
         {tab === 'partner' && role === 'customer' && <div style={styles.card}>
           <b>طلب انضمام كشريك</b>
@@ -236,7 +234,6 @@ function SareeOperationsPanel() {
         {role === 'admin' && tab === 'applications' && <><b>طلبات الانضمام الجديدة ({applications.length})</b>{applications.map(a => <article style={styles.card} key={a.id}><b>{a.display_name} · {a.application_type === 'driver' ? 'مندوب' : a.business_type}</b><span>{a.phone} · {a.area_name}</span><span style={styles.muted}>{a.address || a.vehicle_type || ''}</span><div style={styles.row}>{(a.document_paths || []).map((p: string) => btn('عرض مستند', () => void run(() => openPrivateFile('partner-documents', p)), true))}</div><div style={styles.row}>{btn('قبول وتفعيل', () => void run(() => reviewApplication(a.id, true)))}{btn('رفض', () => void run(() => reviewApplication(a.id, false)), true)}</div></article>)}</>}
         {role === 'admin' && tab === 'receipts' && <><b>إيصالات الدفع المعلقة ({receipts.length})</b>{receipts.map(r => <article style={styles.card} key={r.id}><b>{money(r.amount)} · {r.payment_method === 'instapay' ? 'إنستا باي' : 'محفظة إلكترونية'}</b><span>الطلب: {r.order_id}</span><div style={styles.row}>{btn('عرض الإيصال', () => void run(() => openPrivateFile('payment-receipts', r.storage_path)), true)}{btn('تأكيد استلام المبلغ', () => void run(() => reviewReceipt(r.id, true)))}{btn('رفض الإيصال', () => void run(() => reviewReceipt(r.id, false)), true)}</div></article>)}</>}
         {role === 'admin' && tab === 'settlements' && <><b>طلبات التوريد ({settlements.length})</b>{settlements.map(s => <article style={styles.card} key={s.id}><b>{money(s.amount)}</b><span>المندوب: {s.courier_id}</span><div style={styles.row}>{s.receipt_path && btn('عرض الإيصال', () => void run(() => openPrivateFile('payment-receipts', s.receipt_path)), true)}{btn('تأكيد استلام التوريد', () => void run(() => confirmSettlement(s.id)))}</div></article>)}</>}
-        {role === 'admin' && tab === 'support' && <><b>صندوق شكاوى العملاء ({supportTickets.length})</b>{supportTickets.length === 0 ? <div style={styles.card}>لا توجد شكاوى مسجلة حاليًا.</div> : supportTickets.map(t => <article style={styles.card} key={t.id}><b>{t.subject}</b><span>{t.profiles?.full_name || 'عميل'} · {t.profiles?.phone || 'لا يوجد رقم مسجل'}</span><span>{t.message}</span><span style={styles.muted}>{({open:'مفتوحة',in_progress:'قيد المتابعة',resolved:'تم الحل',closed:'مغلقة'} as any)[t.status] || t.status} · {new Date(t.created_at).toLocaleString('ar-EG')}</span>{t.profiles?.phone && <a href={'tel:'+t.profiles.phone}>الاتصال بالعميل</a>}</article>)}</>}
         {role === 'admin' && tab === 'settings' && <div style={styles.card}>
           <b>إعدادات الدفع</b>
           <label><input type="checkbox" checked={!!appSettings.mobile_wallet_enabled} onChange={e => setAppSettings({ ...appSettings, mobile_wallet_enabled: e.target.checked })}/> تفعيل المحافظ الإلكترونية</label>
