@@ -6,14 +6,14 @@ s=p.read_text()
 # The full address and courier patch runs after every other App.tsx patch.
 if __import__("os").environ.get("SAREE_PREPARE_PATCH") == "1":
     if "import LocationSystem from './LocationSystem';" not in s:
-        s="import LocationSystem from './LocationSystem';\\n"+s
+        s="import LocationSystem from './LocationSystem';\n"+s
     if '<LocationSystem/>' not in s:
         if "</header>" not in s: raise SystemExit("Cannot find app header insertion point")
         s=s.replace("</header>","</header><LocationSystem/>",1)
     if "deliveryMapUrl?:string" not in s:
         s=s.replace("notes:string;driver?:string;prescriptionName?:string;pickup?:string;dropoff?:string};","notes:string;driver?:string;prescriptionName?:string;pickup?:string;dropoff?:string;deliveryMapUrl?:string};",1)
     if "saree3:address-selected" not in s:
-        listener=" useEffect(()=>{const syncAddress=(event?:Event)=>{let selected=(event as CustomEvent|undefined)?.detail;try{if(!selected){const raw=localStorage.getItem('saree3:selected-address');if(raw)selected=JSON.parse(raw)}}catch{}if(!selected)return;setAddress({name:selected.label||'المنزل',area:selected.area||'',street:selected.street||'',landmark:selected.landmark||'',lat:selected.lat??null,lng:selected.lng??null});};syncAddress();window.addEventListener('saree3:address-selected',syncAddress);return()=>window.removeEventListener('saree3:address-selected',syncAddress);},[]);\\n"
+        listener=" useEffect(()=>{const syncAddress=(event?:Event)=>{let selected=(event as CustomEvent|undefined)?.detail;try{if(!selected){const raw=localStorage.getItem('saree3:selected-address');if(raw)selected=JSON.parse(raw)}}catch{}if(!selected)return;setAddress({name:selected.label||'المنزل',area:selected.area||'',street:selected.street||'',landmark:selected.landmark||'',lat:selected.lat??null,lng:selected.lng??null});};syncAddress();window.addEventListener('saree3:address-selected',syncAddress);return()=>window.removeEventListener('saree3:address-selected',syncAddress);},[]);\n"
         anchor=" useEffect(()=>save('cart',cart),[cart]);"
         if anchor not in s: raise SystemExit("Cannot find state persistence anchor")
         s=s.replace(anchor,listener+anchor,1)
