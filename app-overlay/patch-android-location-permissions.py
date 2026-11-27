@@ -1,5 +1,4 @@
 from pathlib import Path
-import re
 
 manifest = Path("android/app/src/main/AndroidManifest.xml")
 if not manifest.exists():
@@ -13,9 +12,10 @@ permissions = [
 for permission in permissions:
     tag = f'<uses-permission android:name="{permission}" />'
     if permission not in xml:
-        match = re.search(r"<manifest\\b[^>]*>", xml)
-        if not match:
+        start = xml.find("<manifest")
+        end = xml.find(">", start)
+        if start < 0 or end < 0:
             raise SystemExit("Could not find manifest root element")
-        xml = xml[:match.end()] + "\\n    " + tag + xml[match.end():]
+        xml = xml[:end + 1] + "\\n    " + tag + xml[end + 1:]
 manifest.write_text(xml)
 print("Added foreground coarse and fine location permissions.")
