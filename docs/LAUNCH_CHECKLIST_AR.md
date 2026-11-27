@@ -74,3 +74,6 @@
 - iOS: نجاح بناء Simulator، وليس IPA قابلًا للتثبيت العام.
 
 - [ ] التأكد أن Android يستهدف API 36 أو أعلى (Capacitor 8) وفق متطلبات Google Play الحالية.
+
+- [ ] بريد الدعم الرسمي وسياسة الخصوصية وصفحة طلب حذف الحساب: `beshoy.ishak2@gmail.com`.
+- [ ] تفعيل GitHub Pages من Settings > Pages > Build and deployment > Source: GitHub Actions، ثم التأكد من نجاح نشر صفحات السياسة والحذف.
