@@ -128,6 +128,41 @@ if 'saree-merchant-images' not in s:
  if marker not in s: raise SystemExit('merchant upload: profile insertion anchor missing')
  s=s.replace(marker,panel+'\n'+marker,1)
 
+
+# Draw the home hero illustration as an original, clean SVG guided by the supplied reference.
+brand_dir=Path("public/brand");brand_dir.mkdir(parents=True,exist_ok=True)
+hero_svg="""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 460" role="img" aria-labelledby="title">
+<title id="title">منزل وشجرة ومندوب سريع على دراجة توصيل</title>
+<circle cx="300" cy="232" r="202" fill="#e8f5bd"/>
+<path d="M48 388h504" stroke="#141b0d" stroke-width="13" stroke-linecap="round"/>
+<path d="M92 225 215 115l127 110v160H92z" fill="#fff" stroke="#141b0d" stroke-width="17" stroke-linejoin="round"/>
+<path d="M170 385V270h88v115" fill="#dff0b1" stroke="#141b0d" stroke-width="12"/>
+<path d="M182 270h64M182 290h64" stroke="#141b0d" stroke-width="8" stroke-linecap="round"/>
+<circle cx="259" cy="190" r="26" fill="#dff0b1" stroke="#141b0d" stroke-width="10"/>
+<path d="M259 165v50M234 190h50" stroke="#141b0d" stroke-width="7"/>
+<path d="M70 388c0-43 7-75 22-94 18-24 37-31 53-26 14 4 19 18 11 34-12 22-25 39-24 86" fill="#6fcb00" stroke="#141b0d" stroke-width="12" stroke-linejoin="round"/>
+<path d="M104 284c-24-21-28-42-14-62 19 9 31 26 31 49M126 274c-2-29 8-48 31-57 7 25-1 44-22 61" fill="#a8e02a" stroke="#141b0d" stroke-width="8"/>
+<path d="M430 75h112a24 24 0 0 1 24 24v54a24 24 0 0 1-24 24h-44l-26 25v-25h-42a24 24 0 0 1-24-24V99a24 24 0 0 1 24-24z" fill="#fff" stroke="#141b0d" stroke-width="10"/>
+<path d="M453 116h66M453 139h44" stroke="#6fcb00" stroke-width="12" stroke-linecap="round"/>
+<circle cx="407" cy="337" r="49" fill="#fff" stroke="#141b0d" stroke-width="14"/>
+<circle cx="545" cy="337" r="49" fill="#fff" stroke="#141b0d" stroke-width="14"/>
+<path d="M407 337h70l-34-91h-41l-24 91M443 246h52l39 91M476 246l18-48h29" fill="none" stroke="#141b0d" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M379 338h-24l-20-31 13-13h42M492 337h67l-11 21h-57" fill="#6fcb00" stroke="#141b0d" stroke-width="12" stroke-linejoin="round"/>
+<circle cx="462" cy="160" r="25" fill="#141b0d"/>
+<path d="M441 157c2-31 31-44 53-22l15 22-15 15h-35z" fill="#6fcb00" stroke="#141b0d" stroke-width="9"/>
+<path d="M444 182c-15 29-18 54-5 77l32 35 40-15-12-38 26-25-10-17-39 19-15-39z" fill="#6fcb00" stroke="#141b0d" stroke-width="12" stroke-linejoin="round"/>
+<path d="M451 209 409 242l-24-14-13 17 39 29 60-31" fill="#fff" stroke="#141b0d" stroke-width="12" stroke-linejoin="round"/>
+<path d="M467 286 442 328l-28 13 7 18h58l42-58" fill="#fff" stroke="#141b0d" stroke-width="12" stroke-linejoin="round"/>
+<path d="M452 160h20" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+<path d="M356 365h164" stroke="#6fcb00" stroke-width="10" stroke-linecap="round"/>
+</svg>"""
+(brand_dir/"saree-hero-illustration.svg").write_text(hero_svg,encoding="utf-8")
+hero_art=re.compile(r'<div className="hero-art" aria-hidden="true"><svg[\\s\\S]*?</svg></div>')
+s,n=hero_art.subn('<div className="hero-art"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>',s,count=1)
+if n!=1: raise SystemExit("Could not replace home hero artwork with the approved-style SVG")
+# Keep the approved hero as the first focal card; remove the older duplicate promo/repeat strips.
+s=re.sub(r'<div className="saree-home-promo">[\\s\\S]*?</div>\\s*<div className="saree-repeat-row">[\\s\\S]*?</div>\\s*','',s,count=1)
+
 p.write_text(s,encoding="utf-8")
 if 'SAREE3 pixel-faithful visual foundation' not in css:
  css += """
@@ -144,5 +179,15 @@ button.primary,.primary,.add,.cart-btn{background:#6FCB00!important;border-color
 """
  css=css.replace("@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap');","")
  css="@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700;800&display=swap');\n"+css
+
+ css += """
+.hero{background:#F1FAD3!important;color:#111!important;border:0!important;border-radius:24px!important;box-shadow:0 8px 24px rgba(20,27,13,.06)!important;min-height:230px;padding:24px!important}
+.hero h1{color:#111!important}.hero h1 em{color:#6FCB00!important;font-style:normal}.hero p{color:#42483d!important}
+.hero-art{width:min(42%,280px)!important;min-width:170px!important;height:220px!important;background:transparent!important}
+.hero-art img{width:100%;height:100%;object-fit:contain}
+.hero .hero-tags span{background:#e6f5c3!important;color:#456c00!important;border-radius:999px!important;padding:7px 12px!important}
+@media(max-width:700px){.hero{min-height:180px!important;padding:16px!important;gap:8px!important}.hero-art{width:38%!important;min-width:110px!important;height:150px!important}.hero h1{font-size:24px!important}.hero p{font-size:11px!important}}
+"""
+
  c.write_text(css,encoding="utf-8")
 print("Issue log, WebP merchant/product uploads and visual foundation patched.")
