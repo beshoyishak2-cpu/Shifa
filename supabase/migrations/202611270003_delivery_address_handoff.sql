@@ -121,3 +121,29 @@ grant execute on function public.create_shifa_order(uuid,uuid,jsonb,text) to aut
 
 comment on column public.orders.delivery_map_url is
   'Google Maps link for the immutable delivery destination snapshot visible to the assigned courier.';
+
+
+-- Courier-facing read model. RLS on orders and customer_addresses remains enforced
+-- because this view runs with the caller's privileges.
+create or replace view public.courier_delivery_details
+with (security_invoker = true)
+as
+select
+  o.id as order_id,
+  o.status,
+  o.created_at,
+  o.delivery_area,
+  o.delivery_street,
+  o.delivery_landmark,
+  o.delivery_unit_details,
+  o.delivery_latitude,
+  o.delivery_longitude,
+  o.delivery_map_url,
+  a.address_text,
+  o.customer_id,
+  o.merchant_id
+from public.orders o
+join public.customer_addresses a on a.id = o.address_id
+where o.courier_id = auth.uid();
+
+grant select on public.courier_delivery_details to authenticated;
