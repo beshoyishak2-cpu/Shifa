@@ -53,6 +53,7 @@ jobs:
           python3 app-overlay/patch-web-customer-fixes.py
           python3 app-overlay/patch-city-spelling.py
           python3 app-overlay/patch-brand-logo.py
+          python3 app-overlay/patch-experience-and-issue-log.py
       - name: Preserve patched source for integration review
         uses: actions/upload-artifact@v4
         with:
