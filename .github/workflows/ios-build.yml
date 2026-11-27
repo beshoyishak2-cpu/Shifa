@@ -23,7 +23,7 @@ jobs:
           python3 app-overlay/patch-location.py
           python3 -c "import base64,gzip,pathlib; pathlib.Path('/tmp/patch-live-backend.py').write_bytes(gzip.decompress(base64.b64decode(pathlib.Path('app-overlay/patch-live-backend.py.gz.b64').read_text())))"
           python3 /tmp/patch-live-backend.py
-          cat app-overlay/patch-extra-services.part1.b64 app-overlay/patch-extra-services.part2.b64 app-overlay/patch-extra-services.part3.b64 app-overlay/patch-extra-services.part4.b64 app-overlay/patch-extra-services.part5.b64 > /tmp/patch-extra-services.b64
+          cat app-overlay/patch-extra-services.part1.b64 app-overlay/patch-extra-services.part2.b64 app-overlay/patch-extra-services.part3a.b64 app-overlay/patch-extra-services.part3b.b64 app-overlay/patch-extra-services.part3c.b64 app-overlay/patch-extra-services.part3d.b64 app-overlay/patch-extra-services.part4.b64 app-overlay/patch-extra-services.part5.b64 > /tmp/patch-extra-services.b64
           python3 -c "import base64,gzip,pathlib,hashlib; b=pathlib.Path('/tmp/patch-extra-services.b64').read_bytes(); assert hashlib.sha1(b'blob '+str(len(b)).encode()+b'\\0'+b).hexdigest()=='36c0fcf5ffe21301a17b9a3ee70be00377e3c42c'; pathlib.Path('/tmp/patch-extra-services.py').write_bytes(gzip.decompress(base64.b64decode(b)))"
           python3 /tmp/patch-extra-services.py
           python3 app-overlay/patch-final-fixes.py
