@@ -4,7 +4,7 @@ Arabic RTL local-services and delivery app for Mallawi and nearby villages. Buil
 
 ## Live backend status
 
-The connected Supabase project is active and migrations **001–019** have been applied.
+The connected Supabase project is active and migrations **001–021** have been applied.
 
 The operational backend now includes:
 - Partner applications for merchants and couriers, private document uploads, admin approval/rejection and account activation.
@@ -12,7 +12,8 @@ The operational backend now includes:
 - Wallet account balances and an append-only transaction ledger with server-side credit/debit operations.
 - First-come-first-served courier assignment using a row-locked database function; pre-pickup release returns the order to the shared queue and records the reason.
 - Courier delivery commissions, settlement accounts, settlement receipt submission and admin settlement confirmation.
-- A scheduled pg_cron job that checks overdue/max-debt couriers every minute and applies settlement locks.
+- A scheduled pg_cron job that checks overdue/max-debt couriers every minute and applies settlement locks; locked couriers are removed from dispatch and become available again after admin confirms settlement.
+- A courier is paused while a submitted settlement receipt awaits admin review.
 - RLS enabled on all public tables; operational tables are subscribed to Supabase Realtime.
 
 The new SareeOperationsPanel is mounted by the Android build workflow and provides customer partner/payment actions, courier dispatch/settlement actions and admin review/settings screens.
@@ -33,7 +34,7 @@ Phone/password login currently maps Egyptian phone numbers to an internal non-de
 
 Project URL: https://qfweejmqooojsedsypen.supabase.co
 
-For a fresh environment, apply every SQL file in supabase/migrations/ in filename order. The connected project already has migrations 001–019 applied. Never expose a Supabase service-role or secret key in the mobile app or public repository; the app uses a publishable key and relies on RLS and server-side RPC authorization.
+For a fresh environment, apply every SQL file in supabase/migrations/ in filename order. The connected project already has migrations 001–021 applied. Never expose a Supabase service-role or secret key in the mobile app or public repository; the app uses a publishable key and relies on RLS and server-side RPC authorization.
 
 ## Local development
 
