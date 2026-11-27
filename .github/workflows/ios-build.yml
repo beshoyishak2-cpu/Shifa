@@ -31,6 +31,24 @@ jobs:
           cat app-overlay/patch-admin-console.part1.b64 app-overlay/patch-admin-console.part2.b64 app-overlay/patch-admin-console.part3.b64 app-overlay/patch-admin-console.part4.b64 > /tmp/patch-admin-console.b64
           python3 -c "import base64,gzip,pathlib,hashlib; b=pathlib.Path('/tmp/patch-admin-console.b64').read_bytes(); assert hashlib.sha1(b'blob '+str(len(b)).encode()+b'\\0'+b).hexdigest()=='636b09ec0edf1f8939a40dc7465862795dc27f62'; pathlib.Path('/tmp/patch-admin-console.py').write_bytes(gzip.decompress(base64.b64decode(b)))"
           python3 /tmp/patch-admin-console.py
+          python3 app-overlay/patch-auth.py
+          python3 app-overlay/patch-auth-refresh.py
+          python3 app-overlay/patch-saree-ops.py
+          python3 app-overlay/patch-back-navigation.py
+      - name: Upgrade Capacitor packages to v8
+        run: |
+          npm pkg set "dependencies.@capacitor/core=^8.0.0"
+          npm pkg set "dependencies.@capacitor/android=^8.0.0"
+          npm pkg set "dependencies.@capacitor/ios=^8.0.0"
+          npm pkg set "dependencies.@capacitor/app=^8.0.0"
+          npm pkg set "dependencies.@capacitor/camera=^8.0.0"
+          npm pkg set "dependencies.@capacitor/geolocation=^8.0.0"
+          npm pkg set "dependencies.@capacitor/haptics=^8.0.0"
+          npm pkg set "dependencies.@capacitor/push-notifications=^8.0.0"
+          npm pkg set "dependencies.@capacitor/share=^8.0.0"
+          npm pkg set "dependencies.@capacitor/splash-screen=^8.0.0"
+          npm pkg set "dependencies.@capacitor/status-bar=^8.0.0"
+          npm pkg set "devDependencies.@capacitor/cli=^8.0.0"
       - name: Configure Supabase client for app build
         run: |
           cat > .env.production <<'EOF'
