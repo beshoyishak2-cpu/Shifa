@@ -1,6 +1,12 @@
 name: Saree3 iOS simulator build
 on:
-  # Manual simulator builds only; no automatic build on source commits.
+  push:
+    branches: [main]
+    paths:
+      - 'Shifa-MVP-Project(2).zip'
+      - 'app-overlay/**'
+      - 'supabase/migrations/**'
+      - '.github/workflows/ios-build.yml'
   workflow_dispatch:
 jobs:
   ios-simulator:
