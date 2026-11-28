@@ -42,12 +42,14 @@ replace_once(
 )
 
 old_icons = "{x.icon==='all'?<SareeInlineIcon name=\"all\"/>:x.icon==='restaurant'?<SareeInlineIcon name=\"restaurant\"/>:x.icon==='scooter'?<SareeInlineIcon name=\"scooter\"/>:x.icon==='cafe'?<SareeInlineIcon name=\"sparkle\"/>:x.icon==='grocery'?<SareeInlineIcon name=\"bag\"/>:<SareeInlineIcon name=\"sparkle\"/>}"
-new_icons = "{x.icon==='all'?<Grid2X2 size={22}/>:x.icon==='restaurant'?<SareeInlineIcon name=\"restaurant\"/>:x.icon==='scooter'?<SareeInlineIcon name=\"scooter\"/>:x.icon==='cafe'?<Coffee size={22}/>:x.icon==='grocery'?<SareeInlineIcon name=\"bag\"/>:x.icon==='vegetables'?<Apple size={22}/>:x.icon==='pharmacy'?<Pill size={22}/>:x.icon==='doctors'?<Stethoscope size={22}/>:<SareeInlineIcon name=\"bag\"/>}"
+new_icons = "{x.icon==='all'?<Grid2X2 size={22}/>:x.icon==='restaurant'?<SareeInlineIcon name=\"restaurant\"/>:x.icon==='scooter'?<SareeInlineIcon name=\"scooter\"/>:x.icon==='cafe'?<Coffee size={22}/>:x.icon==='grocery'?<SareeInlineIcon name=\"bag\"/>:x.icon==='vegetables'?<Apple size={22}/>:x.icon==='pharmacy'?<Pill size={22}/>:(x.icon==='doctors'||x.icon==='doctor'||x.icon==='medical'||x.icon==='physician')?<Stethoscope size={22}/>:<SareeInlineIcon name=\"bag\"/>}"
 if old_icons in s:
     line = next((x for x in s.splitlines() if x.startswith('import {') and "from 'lucide-react'" in x), None)
     if not line:
         raise SystemExit('lucide-react import not found')
-    new_line = line.replace('import { ', 'import { Grid2X2, Coffee, Apple, Pill, ', 1)
+    icons_to_add = ['Grid2X2', 'Coffee', 'Apple', 'Pill', 'Stethoscope']
+    missing_icons = [name for name in icons_to_add if name not in line]
+    new_line = line.replace('import { ', 'import { ' + ', '.join(missing_icons) + (', ' if missing_icons else ''), 1)
     s = s.replace(line, new_line, 1)
     replace_once(old_icons, new_icons, 'service category icons')
 else:
@@ -91,6 +93,7 @@ test('service category icons are distinct line icons', () => {
   assert.ok(app.includes('<Apple size={22}/>'));
   assert.ok(app.includes('<Pill size={22}/>'));
   assert.ok(app.includes('<Stethoscope size={22}/>'));
+  assert.ok(app.includes("x.icon==='doctor'||x.icon==='medical'||x.icon==='physician'"));
 });
 """
         tests.write_text(t, encoding='utf-8')
