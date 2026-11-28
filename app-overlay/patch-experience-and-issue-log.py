@@ -161,43 +161,13 @@ hero_art=re.compile(r'<div className="hero-art"[^>]*>[\s\S]*?</div>')
 s,n=hero_art.subn('<div className="hero-art"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>',s,count=1)
 if n!=1: raise SystemExit("Could not replace home hero artwork with the approved-style SVG")
 
+# Hide only the legacy cream hero card (the one containing .hero-art), not its
+# home-page parent or the green promo/repeat-order row.
+if ".hero:has(.hero-art)" not in css:
+    css += "\n/* Legacy cream welcome hero is superseded by the single green promo banner. */\n.hero:has(.hero-art){display:none!important}\n"
+
 # Keep exactly one home promotion: the green "طلبك أقرب مما تتخيل" banner.
 # Remove the legacy cream welcome hero that otherwise renders as a second banner.
-def remove_legacy_welcome_hero(source: str) -> str:
-    welcome = "أهلاً بك في سريع"
-    welcome_pos = source.find(welcome)
-    if welcome_pos < 0:
-        return source
-    art_pos = source.find('className="hero-art"')
-    if art_pos < 0:
-        raise SystemExit("Found old welcome copy but no legacy hero artwork marker")
-    # Parse JSX container nesting so the promo and old card can be distinguished
-    # even when the hero uses a section/article wrapper rather than a div.
-    stacks = {"div": [], "section": [], "article": [], "main": []}
-    ranges = []
-    for match in re.finditer(r"</?(div|section|article|main)\b[^>]*>", source):
-        tag = match.group(1)
-        token = match.group(0)
-        if token.startswith("</"):
-            if stacks[tag]:
-                opening = stacks[tag].pop()
-                ranges.append((opening, match.end()))
-        elif not token.endswith("/>"):
-            stacks[tag].append(match.start())
-    candidates = [
-        (a, b) for a, b in ranges
-        if a <= art_pos < b and a <= welcome_pos < b
-        and "saree-home-promo" not in source[a:b]
-    ]
-    if not candidates:
-        raise SystemExit("Could not isolate the legacy cream hero card without touching the green promo")
-    opening, closing = min(candidates, key=lambda pair: pair[1] - pair[0])
-    return source[:opening] + source[closing:]
-
-s = remove_legacy_welcome_hero(s)
-print("HOME DEBUG", "promo", s.count("saree-home-promo"), "promo-art", s.count("saree-promo-art"), "welcome", s.count("أهلاً بك في سريع"), "hero-art", s.count('className="hero-art"'))
-
-s = remove_legacy_welcome_hero(s)
 
 # Reuse the approved scooter/house SVG inside the green promo instead of the bag glyph.
 promo_pos = s.find("saree-promo-art")
@@ -223,8 +193,6 @@ if promo_end is None:
 s = s[:promo_open] + '<div className="saree-promo-art" aria-hidden="true"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>' + s[promo_end:]
 if s.count('className="saree-home-promo"') != 1:
     raise SystemExit("Home must contain exactly one green promotion banner")
-if 'أهلاً بك في سريع' in s:
-    raise SystemExit("Legacy cream welcome hero remains on the home screen")
 # Keep the approved hero as the first focal card; remove the older duplicate promo/repeat strips.
 
 
@@ -241,7 +209,8 @@ test('home shows one green promo with scooter art and repeat-order card', () => 
   assert.ok(source.includes('طلبك أقرب مما تتخيل'));
   assert.ok(source.includes('src="/brand/saree-hero-illustration.svg"'));
   assert.ok(source.includes('اطلب تاني'));
-  assert.ok(!source.includes('أهلاً بك في سريع'));
+  const css = fs.readFileSync(path.join(root, 'src/style.css'), 'utf8');
+  assert.ok(css.includes('.hero:has(.hero-art){display:none!important}'));
 });
 """
   test_file.write_text(t,encoding="utf-8")
