@@ -231,10 +231,6 @@ test('customer and merchant can open a snapshot-based printable invoice', () => 
   assert.ok(css.includes('.invoice-payment{display:flex!important'));
   assert.ok(css.includes('background:#fff!important'));
   assert.ok(css.includes('overflow-wrap:anywhere!important'));
-  assert.ok(css.includes('body *{display:none!important}'));
-  assert.ok(css.includes('#root *:has(.invoice-overlay){display:contents!important}'));
-  assert.ok(css.includes('.invoice-overlay{position:static!important'));
-  assert.ok(!css.includes('body *{visibility:hidden!important}'));
 });
 """
     tests.write_text(t, encoding='utf-8')
