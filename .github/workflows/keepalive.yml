@@ -1,0 +1,48 @@
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # Every three days at 06:15 UTC.
+    - cron: "15 6 */3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Read one public merchant row
+        env:
+          SUPABASE_URL: https://qfweejmqooojsedsypen.supabase.co
+          SUPABASE_ANON_KEY: sb_publishable_a8Ys0LNdf7UcT6c6lH1KOg_gkXb0X_i
+        shell: bash
+        run: |
+          set -euo pipefail
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+
+          if ! http_code="$(curl --silent --show-error --location \
+            --connect-timeout 10 --max-time 25 \
+            --output "$response_file" --write-out '%{http_code}' \
+            --get "${SUPABASE_URL}/rest/v1/merchants" \
+            --data-urlencode 'select=id' \
+            --data-urlencode 'limit=1' \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header 'Accept: application/json')"; then
+            echo "::error::Supabase keep-alive request failed before receiving an HTTP response."
+            cat "$response_file"
+            exit 1
+          fi
+
+          if [[ "$http_code" != "200" ]]; then
+            echo "::error::Supabase keep-alive returned HTTP ${http_code}; expected 200."
+            cat "$response_file"
+            exit 1
+          fi
+
+          echo "Supabase keep-alive succeeded (HTTP ${http_code}). Read-only response:"
+          cat "$response_file"
+          echo
