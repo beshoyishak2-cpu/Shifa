@@ -17,7 +17,7 @@ replace_once(
 )
 
 old_effect = "useEffect(()=>{if(!backendReady||!supabase||!signedInPhone||!merchantIds.length){setMerchantStoreRows([]);return;}let live=true;supabase.from('merchants').select('id,name,is_open,is_active,commission_percent,delivery_fee,min_order,image_url').in('id',merchantIds).order('name').then(({data,error}:any)=>{if(!live)return;if(error){notify('تعذر تحميل إعدادات متاجرك: '+error.message);return;}setMerchantStoreRows(data||[])});return()=>{live=false}},[signedInPhone,merchantIds]);"
-new_effect = "useEffect(()=>{if(!backendReady){setMerchantIds(SAREE_DEMO_STORES.map(x=>x.id));setMerchantStoreRows(SAREE_DEMO_MERCHANT_ROWS);return;}if(!supabase||!signedInPhone||!merchantIds.length){setMerchantStoreRows([]);return;}let live=true;supabase.from('merchants').select('id,name,is_open,is_active,commission_percent,delivery_fee,min_order,image_url').in('id',merchantIds).order('name').then(({data,error}:any)=>{if(!live)return;if(error){notify('تعذر تحميل إعدادات متاجرك: '+error.message);return;}setMerchantStoreRows(data||[])});return()=>{live=false}},[backendReady,signedInPhone,merchantIds]);"
+new_effect = "useEffect(()=>{if(!backendReady){setMerchantStoreRows(SAREE_DEMO_MERCHANT_ROWS);return;}if(!supabase||!signedInPhone||!merchantIds.length){setMerchantStoreRows([]);return;}let live=true;supabase.from('merchants').select('id,name,is_open,is_active,commission_percent,delivery_fee,min_order,image_url').in('id',merchantIds).order('name').then(({data,error}:any)=>{if(!live)return;if(error){notify('تعذر تحميل إعدادات متاجرك: '+error.message);return;}setMerchantStoreRows(data||[])});return()=>{live=false}},[backendReady,signedInPhone,merchantIds]);"
 replace_once(old_effect, new_effect, 'demo merchant membership')
 
 replace_once(
@@ -32,12 +32,12 @@ replace_once(
 )
 replace_once(
     "address:[address.area,address.street,address.landmark,address.unit].filter(Boolean).join(' – ')",
-    "address:[address.area,address.street,address.landmark,address.unit||''].map(x=>String(x||'').trim()).filter(Boolean).join('، ')||'وسط ملوى، المنيا'",
+    "address:[address.area,address.street,address.landmark,address.unit||''].map(x=>String(x||'').trim()).filter(Boolean).concat(address.area==='وسط ملوى'&&!address.street&&!address.landmark&&!address.unit?['المنيا']:[]).join('، ')||'وسط ملوى، المنيا'",
     'clean demo order address'
 )
 replace_once(
     "value={`${address.area} – ${address.street} – ${address.landmark} – ${address.unit||''}`} readOnly",
-    "value={[address.area,address.street,address.landmark,address.unit||''].map(x=>String(x||'').trim()).filter(Boolean).join('، ')||'وسط ملوى، المنيا'} readOnly",
+    "value={[address.area,address.street,address.landmark,address.unit||''].map(x=>String(x||'').trim()).filter(Boolean).concat(address.area==='وسط ملوى'&&!address.street&&!address.landmark&&!address.unit?['المنيا']:[]).join('، ')||'وسط ملوى، المنيا'} readOnly",
     'clean checkout address display'
 )
 
