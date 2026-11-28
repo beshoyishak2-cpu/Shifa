@@ -120,27 +120,54 @@ if '.invoice-sheet' not in css:
     css += r"""
 /* Merchant cashier + printable customer/merchant invoice. */
 .order-actions .invoice-cancel{border-color:#c84b43!important;color:#a52f28!important}
-.invoice-dialog{width:min(760px,100%);max-height:94dvh;overflow:auto;padding:14px}
+.invoice-dialog{width:min(760px,calc(100vw - 30px));max-width:100%;max-height:94dvh;overflow:auto;padding:14px;box-sizing:border-box}
 .invoice-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:0 0 12px}
 .invoice-actions .invoice-close{position:static;margin-inline-end:auto}
-.invoice-sheet{background:#fff;color:#17231d;border:1px solid #e4e9e5;border-radius:12px;padding:28px;direction:rtl}
-.invoice-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding-bottom:18px;border-bottom:2px solid #6FCB00}
-.invoice-head h1{margin:0 0 4px;font-size:24px;color:#17643d}.invoice-head p{margin:0;color:#66736a;font-size:13px}
-.invoice-number{display:grid;gap:4px;text-align:left}.invoice-number span,.invoice-meta span,.invoice-payment span{font-size:11px;color:#68766e}.invoice-number b{font-size:20px}.invoice-number small{font-size:11px;color:#68766e}
-.invoice-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:18px 0}.invoice-meta>div{display:grid;gap:4px}.invoice-meta b{font-size:13px;overflow-wrap:anywhere}.invoice-address{grid-column:1/-1}
-.invoice-items{width:100%;border-collapse:collapse;margin:6px 0 18px;font-size:12px}.invoice-items th,.invoice-items td{padding:10px 8px;border-bottom:1px solid #e6ece7;text-align:right}.invoice-items th{background:#f1f7f2;font-weight:800}.invoice-items td small{display:block;color:#718078;font-size:10px;margin-top:3px}
-.invoice-totals{width:min(320px,100%);margin-inline-start:auto;display:grid;gap:8px}.invoice-totals>div{display:flex;justify-content:space-between;gap:16px;font-size:12px}.invoice-grand-total{border-top:2px solid #17643d;padding-top:10px;font-size:16px!important;font-weight:900}.invoice-payment{display:flex;justify-content:space-between;gap:12px;margin-top:20px;padding:12px;background:#f1f7f2;border-radius:8px;font-size:12px}.invoice-thanks{text-align:center;color:#68766e;font-size:11px;margin:24px 0 0}
-@media(max-width:600px){.invoice-dialog{padding:10px}.invoice-sheet{padding:16px}.invoice-head h1{font-size:19px}.invoice-items{font-size:10px}.invoice-items th,.invoice-items td{padding:8px 4px}}
+.invoice-sheet{width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow-wrap:anywhere;background:#fff;color:#17231d;border:1px solid #e4e9e5;border-radius:12px;padding:28px;direction:rtl}
+.invoice-sheet *{box-sizing:border-box;min-width:0;max-width:100%;overflow-wrap:anywhere}
+.invoice-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;min-width:0;padding-bottom:18px;border-bottom:2px solid #6FCB00}
+.invoice-head>div{min-width:0;max-width:100%}
+.invoice-head h1{margin:0 0 4px;font-size:24px;color:#17643d;overflow-wrap:anywhere;word-break:break-word}
+.invoice-head p{margin:0;color:#66736a;font-size:13px}
+.invoice-number{display:grid;gap:4px;text-align:left;min-width:0;max-width:100%}
+.invoice-number span,.invoice-meta span,.invoice-payment span{font-size:11px;color:#68766e}
+.invoice-number b{font-size:20px;overflow-wrap:anywhere;word-break:break-all}
+.invoice-number small{font-size:11px;color:#68766e;overflow-wrap:anywhere}
+.invoice-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-width:0;padding:18px 0}
+.invoice-meta>div{display:grid;gap:4px;min-width:0;max-width:100%}
+.invoice-meta b{font-size:13px;overflow-wrap:anywhere;word-break:break-word}
+.invoice-address{grid-column:1/-1}
+.invoice-items{width:100%;max-width:100%;min-width:0;table-layout:fixed;border-collapse:collapse;margin:6px 0 18px;font-size:12px}
+.invoice-items th,.invoice-items td{width:auto;min-width:0;max-width:100%;padding:10px 6px;border-bottom:1px solid #e6ece7;text-align:right;vertical-align:top;overflow-wrap:anywhere;word-break:break-word}
+.invoice-items th:nth-child(1),.invoice-items td:nth-child(1){width:40%}
+.invoice-items th:nth-child(2),.invoice-items td:nth-child(2){width:13%;text-align:center}
+.invoice-items th:nth-child(3),.invoice-items td:nth-child(3){width:22%}
+.invoice-items th:nth-child(4),.invoice-items td:nth-child(4){width:25%}
+.invoice-items th{background:#f1f7f2;font-weight:800}
+.invoice-items td small{display:block;color:#718078;font-size:10px;margin-top:3px;overflow-wrap:anywhere}
+.invoice-totals{width:min(320px,100%);max-width:100%;min-width:0;margin-inline-start:auto;display:grid;gap:8px}
+.invoice-totals>div{display:flex;justify-content:space-between;gap:16px;min-width:0;font-size:12px}
+.invoice-totals span,.invoice-totals b{min-width:0;overflow-wrap:anywhere}
+.invoice-grand-total{border-top:2px solid #17643d;padding-top:10px;font-size:16px!important;font-weight:900}
+.invoice-payment{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;min-width:0;max-width:100%;margin-top:20px;padding:12px;background:#f1f7f2;border-radius:8px;font-size:12px}
+.invoice-payment>*{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.invoice-thanks{text-align:center;color:#68766e;font-size:11px;margin:24px 0 0;overflow-wrap:anywhere}
+@media(max-width:600px){.invoice-dialog{width:calc(100vw - 20px);padding:10px}.invoice-sheet{padding:16px}.invoice-head{gap:10px}.invoice-head h1{font-size:19px}.invoice-number b{font-size:16px}.invoice-items{font-size:10px}.invoice-items th,.invoice-items td{padding:8px 4px}}
 @media print{
  @page{size:A4;margin:12mm}
- html,body,#root{background:#fff!important;min-height:0!important;height:auto!important}
+ html,body,#root{width:100%!important;min-width:0!important;max-width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
  body *{visibility:hidden!important}
- .invoice-overlay{position:absolute!important;inset:0!important;display:block!important;visibility:visible!important;background:#fff!important;padding:0!important;margin:0!important;overflow:visible!important}
- .invoice-dialog,.invoice-dialog *{visibility:visible!important}
- .invoice-dialog{position:static!important;display:block!important;width:100%!important;max-width:none!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important}
+ .invoice-overlay,.invoice-overlay *{visibility:visible!important}
+ .invoice-overlay{position:static!important;inset:auto!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;min-height:0!important;margin:0 auto!important;padding:0!important;overflow:visible!important;background:#fff!important;place-items:initial!important}
+ .invoice-dialog{position:static!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0 auto!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;color:#17231d!important}
  .invoice-actions,.invoice-close{display:none!important}
- .invoice-sheet{position:static!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;break-inside:avoid}
- .invoice-items tr,.invoice-meta,.invoice-totals,.invoice-payment{break-inside:avoid}
+ .invoice-sheet{position:static!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0 auto!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;color:#17231d!important;break-inside:auto!important}
+ .invoice-sheet *{max-width:100%!important;min-width:0!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+ .invoice-head,.invoice-meta,.invoice-totals,.invoice-payment{min-width:0!important;max-width:100%!important}
+ .invoice-items{width:100%!important;max-width:100%!important;min-width:0!important;table-layout:fixed!important;border-collapse:collapse!important}
+ .invoice-items th,.invoice-items td{min-width:0!important;max-width:100%!important;padding:7px 4px!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+ .invoice-payment{flex-wrap:wrap!important;background:#f1f7f2!important}
+ .invoice-items tr,.invoice-meta>div,.invoice-totals>div,.invoice-payment{break-inside:avoid}
 }
 """
     css_path.write_text(css, encoding='utf-8')
@@ -172,6 +199,12 @@ test('customer and merchant can open a snapshot-based printable invoice', () => 
   assert.ok(source.includes('window.print()'));
   assert.ok(css.includes('@media print'));
   assert.ok(css.includes('.invoice-actions,.invoice-close{display:none!important}'));
+  assert.ok(css.includes('@page{size:A4;margin:12mm}'));
+  assert.ok(css.includes('max-width:186mm!important'));
+  assert.ok(css.includes('table-layout:fixed!important'));
+  assert.ok(css.includes('.invoice-overlay,.invoice-overlay *{visibility:visible!important}'));
+  assert.ok(css.includes('background:#fff!important'));
+  assert.ok(css.includes('overflow-wrap:anywhere!important'));
 });
 """
     tests.write_text(t, encoding='utf-8')
