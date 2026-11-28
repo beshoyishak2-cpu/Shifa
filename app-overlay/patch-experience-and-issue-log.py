@@ -166,31 +166,38 @@ if n!=1: raise SystemExit("Could not replace home hero artwork with the approved
 if ".hero:has(.hero-art)" not in css:
     css += "\n/* Legacy cream welcome hero is superseded by the single green promo banner. */\n.hero:has(.hero-art){display:none!important}\n"
 
-# Keep exactly one home promotion: the green "طلبك أقرب مما تتخيل" banner.
-# Remove the legacy cream welcome hero that otherwise renders as a second banner.
+# Normalize the home promotion to one green banner with the approved scooter SVG.
+promo_markup = r"""<div className="saree-home-promo">
+ <div className="saree-promo-copy"><span className="saree-promo-eyebrow">سريع · ملوى</span><b>طلبك أقرب مما تتخيل</b><small>مطاعم ومتاجر وخدمات يومية في مكان واحد</small><button onClick={()=>setTab('search')}>اكتشف المتاجر <span className="saree-inline-arrow"><SareeInlineIcon name="arrow" size={15}/></span></button></div>
+ <div className="saree-promo-art" aria-hidden="true"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>
+</div>"""
+promo_open = s.find('<div className="saree-home-promo">')
+if promo_open >= 0:
+    depth = 0
+    promo_end = None
+    for match in re.finditer(r"</?div\b[^>]*>", s[promo_open:]):
+        token = match.group(0)
+        if token.startswith("</"):
+            depth -= 1
+            if depth == 0:
+                promo_end = promo_open + match.end()
+                break
+        elif not token.endswith("/>"):
+            depth += 1
+    if promo_end is None:
+        raise SystemExit("Existing green home promo JSX is not balanced")
+    s = s[:promo_open] + promo_markup + s[promo_end:]
+else:
+    home = re.search(r"\{role\s*===\s*'customer'\s*&&\s*tab\s*===\s*'home'\s*&&\s*<>", s)
+    if not home:
+        raise SystemExit("Could not locate customer home screen to insert green promo")
+    repeat = r"""<div className="saree-repeat-row"><div><b>اطلب تاني</b><small>راجع طلباتك السابقة وكرر طلبك بسهولة</small></div><button onClick={()=>setTab('orders')}>طلباتي <span className="saree-inline-arrow"><SareeInlineIcon name="arrow" size={15}/></span></button></div>"""
+    s = s[:home.end()] + promo_markup + repeat + s[home.end():]
+if s.count('className="saree-home-promo"') != 1:
+    raise SystemExit("Home must contain exactly one green promotion banner")
+if s.count("اطلب تاني") != 1:
+    raise SystemExit("Home must contain exactly one repeat-order shortcut")
 
-# Reuse the approved scooter/house SVG inside the green promo instead of the bag glyph.
-promo_pos = s.find("saree-promo-art")
-if promo_pos < 0:
-    home_pos = s.find("saree-home-promo")
-    raise SystemExit("Could not locate promo illustration container; home excerpt: " + s[max(0,home_pos-150):home_pos+700] + " | welcome excerpt: " + s[max(0,s.find("أهلاً بك في سريع")-150):s.find("أهلاً بك في سريع")+700])
-promo_open = s.rfind("<div", 0, promo_pos)
-if promo_open < 0:
-    raise SystemExit("Could not locate promo illustration opening div")
-promo_depth = 0
-promo_end = None
-for match in re.finditer(r"</?div\b[^>]*>", s[promo_open:]):
-    token = match.group(0)
-    if token.startswith("</"):
-        promo_depth -= 1
-        if promo_depth == 0:
-            promo_end = promo_open + match.end()
-            break
-    elif not token.endswith("/>"):
-        promo_depth += 1
-if promo_end is None:
-    raise SystemExit("Promo illustration JSX is not balanced")
-s = s[:promo_open] + '<div className="saree-promo-art" aria-hidden="true"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>' + s[promo_end:]
 if s.count('className="saree-home-promo"') != 1:
     raise SystemExit("Home must contain exactly one green promotion banner")
 # Keep the approved hero as the first focal card; remove the older duplicate promo/repeat strips.
