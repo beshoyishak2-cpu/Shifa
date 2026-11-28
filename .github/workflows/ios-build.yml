@@ -71,6 +71,7 @@ jobs:
               s = s.replace(anchor, fallback + anchor, 1)
               p.write_text(s, encoding='utf-8')
           PY
+          python3 app-overlay/patch-demo-order-flow.py
       - name: Upgrade Capacitor packages to v8
         run: |
           npm pkg set "dependencies.@capacitor/core=^8.0.0"
