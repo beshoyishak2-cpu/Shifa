@@ -55,7 +55,7 @@ if load_end in app:
  app = app.replace(load_end, "})().finally(()=>{if(alive)setCatalogLoading(false)});return()=>{alive=false}},[signedInPhone]);", 1)
 
 # Home-only promo and repeat-order shortcuts; no discount or price is fabricated.
-if 'className="saree-home-promo"' not in app:
+if '<div className="saree-home-promo">' not in app:
     m = re.search(r"\{role\s*===\s*'customer'\s*&&\s*tab\s*===\s*'home'\s*&&\s*<>", app)
     if not m:
         raise SystemExit("Could not locate customer home screen section for promo banner")
