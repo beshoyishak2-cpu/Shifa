@@ -47,6 +47,8 @@ jobs:
           python3 app-overlay/patch-city-spelling.py
           python3 app-overlay/patch-brand-logo.py
           python3 app-overlay/patch-experience-and-issue-log.py
+          python3 -c "import base64,gzip,pathlib; pathlib.Path('/tmp/patch-demo-mode.py').write_bytes(gzip.decompress(base64.b64decode(pathlib.Path('app-overlay/patch-demo-mode.py.gz.b64').read_text())))"
+          python3 /tmp/patch-demo-mode.py
       - name: Upgrade Capacitor packages to v8
         run: |
           npm pkg set "dependencies.@capacitor/core=^8.0.0"
