@@ -162,6 +162,21 @@ if '.invoice-sheet' not in css:
  #root *:has(.invoice-overlay){display:contents!important;position:static!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important;transform:none!important}
  .invoice-overlay{position:static!important;inset:auto!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;transform:none!important;background:#fff!important;place-items:initial!important}
  .invoice-overlay *{display:revert!important;position:static!important;max-width:100%!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important;transform:none!important;box-shadow:none!important}
+ .invoice-head{display:flex!important;justify-content:space-between!important;align-items:flex-start!important}
+ .invoice-number{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important}
+ .invoice-number span,.invoice-number b,.invoice-number small{display:block!important}
+ .invoice-meta{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+ .invoice-meta>div{display:grid!important;grid-template-columns:minmax(72px,.85fr) minmax(0,1.5fr)!important;align-items:start!important;column-gap:8px!important;row-gap:0!important}
+ .invoice-meta span,.invoice-meta b{display:block!important;min-width:0!important}
+ .invoice-address{grid-column:1/-1!important}
+ .invoice-items{display:table!important}
+ .invoice-items thead{display:table-header-group!important}
+ .invoice-items tbody{display:table-row-group!important}
+ .invoice-items tr{display:table-row!important}
+ .invoice-items th,.invoice-items td{display:table-cell!important}
+ .invoice-totals{display:grid!important;gap:8px!important}
+ .invoice-totals>div{display:flex!important;justify-content:space-between!important}
+ .invoice-payment{display:flex!important;justify-content:space-between!important;align-items:flex-start!important;flex-wrap:wrap!important}
  .invoice-dialog{position:static!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;color:#17231d!important}
  .invoice-actions,.invoice-close{display:none!important}
  .invoice-sheet{position:static!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;color:#17231d!important;break-inside:auto!important}
@@ -209,6 +224,9 @@ test('customer and merchant can open a snapshot-based printable invoice', () => 
   assert.ok(css.includes('#root *:has(.invoice-overlay){display:contents!important}'));
   assert.ok(css.includes('.invoice-overlay{position:static!important'));
   assert.ok(!css.includes('body *{visibility:hidden!important}'));
+  assert.ok(css.includes('.invoice-meta>div{display:grid!important;grid-template-columns:minmax(72px,.85fr) minmax(0,1.5fr)!important'));
+  assert.ok(css.includes('.invoice-items th,.invoice-items td{display:table-cell!important}'));
+  assert.ok(css.includes('.invoice-payment{display:flex!important'));
   assert.ok(css.includes('background:#fff!important'));
   assert.ok(css.includes('overflow-wrap:anywhere!important'));
   assert.ok(css.includes('body *{display:none!important}'));
