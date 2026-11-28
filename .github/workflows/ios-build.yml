@@ -78,6 +78,7 @@ jobs:
           python3 app-overlay/patch-pull-to-refresh.py
           python3 app-overlay/patch-build310-fixes.py
           python3 app-overlay/patch-screens-311.py
+          python3 app-overlay/patch-screens-312.py
       - name: Upgrade Capacitor packages to v8
         run: |
           npm pkg set "dependencies.@capacitor/core=^8.0.0"
