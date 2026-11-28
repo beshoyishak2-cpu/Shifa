@@ -188,14 +188,27 @@ def remove_legacy_welcome_hero(source: str) -> str:
 s = remove_legacy_welcome_hero(s)
 
 # Reuse the approved scooter/house SVG inside the green promo instead of the bag glyph.
-promo_art = re.compile(r'<div className="saree-promo-art"[^>]*>.*?</div>', re.S)
-s, promo_count = promo_art.subn(
-    '<div className="saree-promo-art" aria-hidden="true"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>',
-    s, count=1
-)
-if promo_count != 1:
-    raise SystemExit("Could not place the scooter illustration inside the single green home banner")
-
+promo_pos = s.find("saree-promo-art")
+if promo_pos < 0:
+    home_pos = s.find("saree-home-promo")
+    raise SystemExit("Could not locate promo illustration container; home excerpt: " + s[max(0,home_pos-150):home_pos+700])
+promo_open = s.rfind("<div", 0, promo_pos)
+if promo_open < 0:
+    raise SystemExit("Could not locate promo illustration opening div")
+promo_depth = 0
+promo_end = None
+for match in re.finditer(r"</?div\b[^>]*>", s[promo_open:]):
+    token = match.group(0)
+    if token.startswith("</"):
+        promo_depth -= 1
+        if promo_depth == 0:
+            promo_end = promo_open + match.end()
+            break
+    elif not token.endswith("/>"):
+        promo_depth += 1
+if promo_end is None:
+    raise SystemExit("Promo illustration JSX is not balanced")
+s = s[:promo_open] + '<div className="saree-promo-art" aria-hidden="true"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>' + s[promo_end:]
 if s.count('className="saree-home-promo"') != 1:
     raise SystemExit("Home must contain exactly one green promotion banner")
 if 'أهلاً بك في سريع' in s:
