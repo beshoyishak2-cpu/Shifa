@@ -55,7 +55,7 @@ if load_end in app:
  app = app.replace(load_end, "})().finally(()=>{if(alive)setCatalogLoading(false)});return()=>{alive=false}},[signedInPhone]);", 1)
 
 # Home-only promo and repeat-order shortcuts; no discount or price is fabricated.
-if "saree-home-promo" not in app:
+if 'className="saree-home-promo"' not in app:
     m = re.search(r"\{role\s*===\s*'customer'\s*&&\s*tab\s*===\s*'home'\s*&&\s*<>", app)
     if not m:
         raise SystemExit("Could not locate customer home screen section for promo banner")
@@ -68,6 +68,11 @@ if "saree-home-promo" not in app:
 """
     pos = m.end()
     app = app[:pos] + insert + app[pos:]
+
+if 'className="saree-home-promo"' not in app:
+    raise SystemExit("Home promo banner was not inserted")
+if "اطلب تاني" not in app:
+    raise SystemExit("Repeat-order shortcut was not inserted below the home promo")
 
 # Re-mount the cart badge when its count changes, so the pop animation restarts.
 app = app.replace('<i className="nav-cart-badge">', '<i key={count} className="nav-cart-badge">')
