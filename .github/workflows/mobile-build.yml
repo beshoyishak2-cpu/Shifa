@@ -68,7 +68,9 @@ jobs:
           python3 /tmp/patch-demo-mode.py
           python3 app-overlay/patch-demo-order-flow.py
           python3 app-overlay/patch-reference-design.py
-          python3 app-overlay/patch-admin-theme.py\n          python3 app-overlay/patch-splash-theme.py
+          python3 app-overlay/patch-admin-theme.py
+          python3 app-overlay/patch-splash-theme.py
+          python3 app-overlay/patch-pull-to-refresh.py
       - name: Preserve patched source for integration review
         uses: actions/upload-artifact@v4
         with:
