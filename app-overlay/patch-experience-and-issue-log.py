@@ -169,12 +169,12 @@ def remove_legacy_welcome_hero(source: str) -> str:
     if pos < 0:
         # The extracted source may already have had its welcome copy removed.
         return source
-    candidates = list(re.finditer(r'<(div|section)\\b[^>]*className=["\\']hero(?:\\s|["\\'])[^>]*>', source[:pos]))
+    candidates = list(re.finditer(r"<(div|section)\\b[^>]*className=['\\"]hero(?:\\s|['\\"])[^>]*>", source[:pos]))
     if not candidates:
         raise SystemExit("Found the old welcome copy but could not locate its hero container")
     opening = candidates[-1]
     tag = opening.group(1)
-    token = re.compile(r'</?'+tag+r'\\b[^>]*>')
+    token = re.compile(r"</?"+tag+r"\\b[^>]*>")
     depth = 0
     for match in token.finditer(source, opening.start()):
         if match.group(0).startswith('</'):
