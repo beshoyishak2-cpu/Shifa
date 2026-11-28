@@ -163,7 +163,7 @@ if n!=1: raise SystemExit("Could not replace home hero artwork with the approved
 
 # Normalize the home promotion to one green banner with the approved scooter SVG.
 promo_markup = r"""<div className="saree-home-promo">
- <div className="saree-promo-copy"><span className="saree-promo-eyebrow">سريع · ملوى</span><b>طلبك أقرب مما تتخيل</b><small>مطاعم ومتاجر وخدمات يومية في مكان واحد</small><button onClick={()=>setTab('search')}>اكتشف المتاجر <span className="saree-inline-arrow"><SareeInlineIcon name="arrow" size={15}/></span></button></div>
+ <div className="saree-promo-copy"><span className="saree-promo-eyebrow">سريع · ملوى</span><b>طلبك أقرب مما تتخيل</b><small>مطاعم ومتاجر وخدمات يومية في مكان واحد</small><button onClick={()=>setTab('search')}>اكتشف المتاجر <span aria-hidden="true">←</span></button></div>
  <div className="saree-promo-art" aria-hidden="true"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>
 </div>"""
 promo_open = s.find('<div className="saree-home-promo">')
