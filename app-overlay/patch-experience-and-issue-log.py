@@ -195,6 +195,7 @@ def remove_legacy_welcome_hero(source: str) -> str:
     return source[:opening] + source[closing:]
 
 s = remove_legacy_welcome_hero(s)
+print("HOME DEBUG", "promo", s.count("saree-home-promo"), "promo-art", s.count("saree-promo-art"), "welcome", s.count("أهلاً بك في سريع"), "hero-art", s.count('className="hero-art"'))
 
 s = remove_legacy_welcome_hero(s)
 
@@ -202,7 +203,7 @@ s = remove_legacy_welcome_hero(s)
 promo_pos = s.find("saree-promo-art")
 if promo_pos < 0:
     home_pos = s.find("saree-home-promo")
-    raise SystemExit("Could not locate promo illustration container; home excerpt: " + s[max(0,home_pos-150):home_pos+700])
+    raise SystemExit("Could not locate promo illustration container; home excerpt: " + s[max(0,home_pos-150):home_pos+700] + " | welcome excerpt: " + s[max(0,s.find("أهلاً بك في سريع")-150):s.find("أهلاً بك في سريع")+700])
 promo_open = s.rfind("<div", 0, promo_pos)
 if promo_open < 0:
     raise SystemExit("Could not locate promo illustration opening div")
