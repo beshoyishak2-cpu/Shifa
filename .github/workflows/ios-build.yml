@@ -73,6 +73,7 @@ jobs:
           PY
           python3 app-overlay/patch-demo-order-flow.py
           python3 app-overlay/patch-reference-design.py
+          python3 app-overlay/patch-admin-theme.py
       - name: Upgrade Capacitor packages to v8
         run: |
           npm pkg set "dependencies.@capacitor/core=^8.0.0"
