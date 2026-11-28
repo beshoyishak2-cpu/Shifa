@@ -71,6 +71,7 @@ jobs:
           python3 app-overlay/patch-admin-theme.py
           python3 app-overlay/patch-splash-theme.py
           python3 app-overlay/patch-pull-to-refresh.py
+          python3 app-overlay/patch-build310-fixes.py
       - name: Preserve patched source for integration review
         uses: actions/upload-artifact@v4
         with:
