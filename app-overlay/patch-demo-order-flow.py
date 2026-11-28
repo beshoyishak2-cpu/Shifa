@@ -52,6 +52,20 @@ if old_icons in s:
     replace_once(old_icons, new_icons, 'service category icons')
 else:
     print('Service category grid is not part of this target; icon patch skipped.')
+
+# Keep demo courier assignments visible until the courier explicitly picks up.
+# Demo mode has no authenticated user ID, so it must filter by its local courier ID.
+replace_once(
+    "status:'في الطريق',courierId:'demo-courier'",
+    "status:'جاهز للاستلام',courierId:'demo-courier'",
+    'demo courier acceptance keeps pickup status'
+)
+replace_once(
+    "o.courierId===currentUserId",
+    "(backendReady?o.courierId===currentUserId:o.courierId==='demo-courier')",
+    'demo courier task ownership filter'
+)
+
 app.write_text(s, encoding='utf-8')
 
 tests = Path('tests/source-smoke.test.cjs')
@@ -77,6 +91,22 @@ test('service category icons are distinct line icons', () => {
   assert.ok(app.includes('<Apple size={22}/>'));
   assert.ok(app.includes('<Pill size={22}/>'));
   assert.ok(app.includes('<Stethoscope size={22}/>'));
+});
+"""
+        tests.write_text(t, encoding='utf-8')
+
+
+tests = Path('tests/source-smoke.test.cjs')
+if tests.exists():
+    t = tests.read_text(encoding='utf-8')
+    if 'demo courier can accept, pick up and deliver an order' not in t:
+        t += """
+\ntest('demo courier can accept, pick up and deliver an order', () => {
+  const app = fs.readFileSync(path.join(root, 'src/App.tsx'), 'utf8');
+  assert.ok(app.includes("status:'جاهز للاستلام',courierId:'demo-courier'"));
+  assert.ok(app.includes("(backendReady?o.courierId===currentUserId:o.courierId==='demo-courier')"));
+  assert.ok(app.includes('استلام الطلب'));
+  assert.ok(app.includes('تأكيد التسليم'));
 });
 """
         tests.write_text(t, encoding='utf-8')
