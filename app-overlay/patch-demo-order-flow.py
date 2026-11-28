@@ -55,6 +55,13 @@ if old_icons in s:
 else:
     print('Service category grid is not part of this target; icon patch skipped.')
 
+# In local demo mode the courier starts available; production availability remains server-controlled.
+replace_once(
+    "[driverOnline,setDriverOnline]=useState(false),",
+    "[driverOnline,setDriverOnline]=useState(()=>!backendReady),",
+    'demo courier starts available'
+)
+
 # Keep demo courier assignments visible until the courier explicitly picks up.
 # Demo mode has no authenticated user ID, so it must filter by its local courier ID.
 replace_once(
@@ -116,6 +123,19 @@ replace_once(
 
 css_path=Path('src/style.css')
 css=css_path.read_text(encoding='utf-8')
+css += r"""
+
+/* Demo switcher spacing: keep the brand clear of the local-demo label on narrow phones. */
+@media(max-width:420px){
+ .saree-demo-switcher{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:14px!important;margin:12px 0 18px!important;padding:14px 12px!important;}
+ .saree-demo-brand{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:14px!important;min-height:42px!important;width:100%!important;}
+ .saree-demo-brand img{width:88px!important;height:34px!important;flex:0 0 88px!important;}
+ .saree-demo-brand span{display:inline-flex!important;align-items:center!important;min-height:30px!important;padding:6px 10px!important;line-height:1.5!important;white-space:nowrap!important;}
+ .saree-demo-roles{width:100%!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important;}
+ .saree-demo-roles strong{grid-column:1/-1!important;}
+ .saree-demo-roles button{min-width:0!important;padding:8px 4px!important;white-space:nowrap!important;}
+}
+"""
 if '.invoice-sheet' not in css:
     css += r"""
 /* Merchant cashier + printable customer/merchant invoice. */
@@ -265,6 +285,30 @@ test('service category icons are distinct line icons', () => {
 """
         tests.write_text(t, encoding='utf-8')
 
+
+tests = Path('tests/source-smoke.test.cjs')
+if tests.exists():
+    t = tests.read_text(encoding='utf-8')
+    if 'demo courier starts available and can toggle availability' not in t:
+        t += """
+\ntest('demo courier starts available and can toggle availability', () => {
+  const app = fs.readFileSync(path.join(root, 'src/App.tsx'), 'utf8');
+  assert.ok(app.includes('[driverOnline,setDriverOnline]=useState(()=>!backendReady)'));
+  assert.ok(app.includes("if(!backendReady){setDriverOnline(v=>!v);return;}"));
+  assert.ok(app.includes("{driverOnline?'متاح لاستلام الطلبات':'غير متاح'}"));
+  assert.ok(app.includes("{driverOnline?'متاح':'غير متاح'}"));
+});
+
+test('demo switcher has separated brand and label at 390px width', () => {
+  const css = fs.readFileSync(path.join(root, 'src/style.css'), 'utf8');
+  assert.ok(css.includes('@media(max-width:420px)'));
+  assert.ok(css.includes('flex-direction:column!important'));
+  assert.ok(css.includes('gap:14px!important'));
+  assert.ok(css.includes('min-height:42px!important'));
+  assert.ok(css.includes('white-space:nowrap!important'));
+});
+"""
+        tests.write_text(t, encoding='utf-8')
 
 tests = Path('tests/source-smoke.test.cjs')
 if tests.exists():
