@@ -1,17 +1,9 @@
 name: Saree3 Android build
 permissions:
-  contents: write
+  contents: read
 on:
+  # Manual builds only. Pushes must never publish a release automatically.
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'Shifa-MVP-Project(2).zip'
-      - 'app-overlay/**'
-      - 'supabase/migrations/**'
-      - 'capacitor.config.ts'
-      - 'index.html'
-      - '.github/workflows/mobile-build.yml'
 jobs:
   android-debug:
     runs-on: ubuntu-latest
@@ -173,18 +165,6 @@ jobs:
           name: shifa-android-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-      - name: Publish public debug APK release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: saree-debug-${{ github.run_number }}
-          name: Saree debug APK #${{ github.run_number }}
-          body: |
-            Automated debug APK build for testing. This is not a store release.
-          prerelease: true
-          draft: false
-          files: android/app/build/outputs/apk/debug/app-debug.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Check Android signing secrets
         id: signing
         env:
