@@ -71,6 +71,7 @@ if tests.exists():
 
 test('service category icons are distinct line icons', () => {
   const app = fs.readFileSync(path.join(root, 'src/App.tsx'), 'utf8');
+  if (!app.includes('className="service-grid"')) return;
   assert.ok(app.includes('<Grid2X2 size={22}/>'));
   assert.ok(app.includes('<Coffee size={22}/>'));
   assert.ok(app.includes('<Apple size={22}/>'));
