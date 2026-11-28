@@ -55,6 +55,16 @@ jobs:
           python3 app-overlay/patch-brand-logo.py
           python3 app-overlay/patch-experience-and-issue-log.py
           python3 -c "import base64,gzip,pathlib; pathlib.Path('/tmp/patch-demo-mode.py').write_bytes(gzip.decompress(base64.b64decode(pathlib.Path('app-overlay/patch-demo-mode.py.gz.b64').read_text())))"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/patch-demo-mode.py')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('header_anchor = "</header><SareeSplash/><LocationSystem/>"','header_anchor = "</header>"')
+          s=s.replace("role_switcher = r'''</header>{!backendReady", "role_switcher = r'''{!backendReady")
+          s=s.replace("</section>}<SareeSplash/><LocationSystem/>'''", "</section>}'''")
+          s=s.replace('s = s.replace(header_anchor,role_switcher,1)','s = s.replace(header_anchor,header_anchor+role_switcher,1)')
+          p.write_text(s,encoding='utf-8')
+          PY
           python3 /tmp/patch-demo-mode.py
       - name: Preserve patched source for integration review
         uses: actions/upload-artifact@v4
