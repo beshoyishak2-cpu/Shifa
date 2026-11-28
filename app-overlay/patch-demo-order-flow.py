@@ -77,7 +77,8 @@ replace_once(
 )
 replace_once(
     " const [searchKeyboardOpen,setSearchKeyboardOpen]=useState(false);",
-    " const [searchKeyboardOpen,setSearchKeyboardOpen]=useState(false);\\n const [invoiceOrder,setInvoiceOrder]=useState<Order|null>(null);",
+    """ const [searchKeyboardOpen,setSearchKeyboardOpen]=useState(false);
+ const [invoiceOrder,setInvoiceOrder]=useState<Order|null>(null);""",
     'invoice state'
 )
 replace_once(
@@ -97,25 +98,26 @@ replace_once(
 )
 replace_once(
     " const renderOrders=(filter:'customer'|'merchant'|'driver'|'admin')=>",
-    " const openInvoice=(o:Order)=>{setInvoiceOrder(o);setModal('invoice')};\\n const renderOrders=(filter:'customer'|'merchant'|'driver'|'admin')=>",
+    """ const openInvoice=(o:Order)=>{setInvoiceOrder(o);setModal('invoice')};
+ const renderOrders=(filter:'customer'|'merchant'|'driver'|'admin')=>""",
     'invoice open helper'
 )
 replace_once(
-    "{(filter==='merchant'||filter==='admin')&&o.status!=='تم التسليم'&&o.status!=='ملغي'&&(filter==='admin'||o.status!=='جاهز للاستلام')&&<button className=\\\"primary small\\\" onClick={()=>void updateServerOrder(o,nextStatus(o.status))}>تحديث حالة الطلب</button>}",
-    "{filter==='merchant'&&o.status==='جديد'&&<button className=\\\"primary small\\\" onClick={()=>void updateServerOrder(o,'تم القبول')}>قبول الطلب</button>}{filter==='merchant'&&o.status==='تم القبول'&&<button className=\\\"primary small\\\" onClick={()=>void updateServerOrder(o,'قيد التجهيز')}>ابدأ التجهيز</button>}{filter==='merchant'&&o.status==='قيد التجهيز'&&<button className=\\\"primary small\\\" onClick={()=>void updateServerOrder(o,'جاهز للاستلام')}>جاهز للاستلام</button>}{filter==='merchant'&&(o.status==='جديد'||o.status==='تم القبول')&&<button className=\\\"outline small invoice-cancel\\\" onClick={()=>void updateServerOrder(o,'ملغي')}>رفض/إلغاء</button>}{filter==='admin'&&o.status!=='تم التسليم'&&o.status!=='ملغي'&&<button className=\\\"primary small\\\" onClick={()=>void updateServerOrder(o,nextStatus(o.status))}>تحديث حالة الطلب</button>}{(filter==='customer'||filter==='merchant')&&<button className=\\\"outline small\\\" onClick={()=>openInvoice(o)}>فاتورة</button>}",
+    """{(filter==='merchant'||filter==='admin')&&o.status!=='تم التسليم'&&o.status!=='ملغي'&&(filter==='admin'||o.status!=='جاهز للاستلام')&&<button className="primary small" onClick={()=>void updateServerOrder(o,nextStatus(o.status))}>تحديث حالة الطلب</button>}""",
+    """{filter==='merchant'&&o.status==='جديد'&&<button className="primary small" onClick={()=>void updateServerOrder(o,'تم القبول')}>قبول الطلب</button>}{filter==='merchant'&&o.status==='تم القبول'&&<button className="primary small" onClick={()=>void updateServerOrder(o,'قيد التجهيز')}>ابدأ التجهيز</button>}{filter==='merchant'&&o.status==='قيد التجهيز'&&<button className="primary small" onClick={()=>void updateServerOrder(o,'جاهز للاستلام')}>جاهز للاستلام</button>}{filter==='merchant'&&(o.status==='جديد'||o.status==='تم القبول')&&<button className="outline small invoice-cancel" onClick={()=>void updateServerOrder(o,'ملغي')}>رفض/إلغاء</button>}{filter==='admin'&&o.status!=='تم التسليم'&&o.status!=='ملغي'&&<button className="primary small" onClick={()=>void updateServerOrder(o,nextStatus(o.status))}>تحديث حالة الطلب</button>}{(filter==='customer'||filter==='merchant')&&<button className="outline small" onClick={()=>openInvoice(o)}>فاتورة</button>}""",
     'merchant cashier actions and invoice buttons'
 )
-invoice=\` {modal==='invoice'&&invoiceOrder&&<div className="overlay invoice-overlay" onClick={()=>setModal('')}><div className="dialog invoice-dialog" onClick={e=>e.stopPropagation()}><div className="invoice-actions"><button className="close invoice-close" onClick={()=>setModal('')}><X/></button><button className="primary" onClick={()=>window.print()}>طباعة الفاتورة</button></div><article className="invoice-sheet" dir="rtl"><div className="invoice-head"><div><h1>{invoiceOrder.storeName}</h1><p>فاتورة طلب</p></div><div className="invoice-number"><span>رقم الفاتورة</span><b>#{invoiceOrder.number}</b><small>{new Date(invoiceOrder.createdAt).toLocaleString('ar-EG')}</small></div></div><div className="invoice-meta"><div><span>اسم العميل</span><b>{invoiceOrder.customer||'—'}</b></div><div><span>رقم الهاتف</span><b>{invoiceOrder.phone||'—'}</b></div><div className="invoice-address"><span>عنوان التوصيل</span><b>{invoiceOrder.address||'—'}</b></div><div><span>حالة الطلب</span><b>{invoiceOrder.status}</b></div></div><table className="invoice-items"><thead><tr><th>الصنف</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead><tbody>{invoiceOrder.lines.map((line,i)=>{const product=products.find(p=>p.id===line.productId);const unitPrice=typeof line.unitPrice==='number'?line.unitPrice:lineUnitPrice(line);const lineTotal=typeof line.lineTotal==='number'?line.lineTotal:unitPrice*line.qty;const options=(line.options||[]).flatMap(g=>g.values.map(v=>v.name));return <tr key={line.productId+'-'+i}><td><b>{line.productName||product?.name||'منتج'}</b>{options.length>0&&<small>{options.join('، ')}</small>}</td><td>{line.qty}</td><td>{money(unitPrice)}</td><td>{money(lineTotal)}</td></tr>})}{invoiceOrder.lines.length===0&&<tr><td colSpan={4}>لا توجد أصناف — {invoiceOrder.notes||invoiceOrder.kind}</td></tr>}</tbody></table><div className="invoice-totals"><div><span>المنتجات</span><b>{money(invoiceOrder.total)}</b></div><div><span>التوصيل</span><b>{money(invoiceOrder.delivery)}</b></div><div className="invoice-grand-total"><span>الإجمالي</span><b>{money(invoiceOrder.total+invoiceOrder.delivery)}</b></div></div><div className="invoice-payment"><span>طريقة الدفع</span><b>{invoiceOrder.payment||'غير محدد'}</b></div><p className="invoice-thanks">شكرًا لاستخدام سريع — ملوى</p></article></div></div>}\\n\`;
+invoice = r""" {modal==='invoice'&&invoiceOrder&&<div className="overlay invoice-overlay" onClick={()=>setModal('')}><div className="dialog invoice-dialog" onClick={e=>e.stopPropagation()}><div className="invoice-actions"><button className="close invoice-close" onClick={()=>setModal('')}><X/></button><button className="primary" onClick={()=>window.print()}>طباعة الفاتورة</button></div><article className="invoice-sheet" dir="rtl"><div className="invoice-head"><div><h1>{invoiceOrder.storeName}</h1><p>فاتورة طلب</p></div><div className="invoice-number"><span>رقم الفاتورة</span><b>#{invoiceOrder.number}</b><small>{new Date(invoiceOrder.createdAt).toLocaleString('ar-EG')}</small></div></div><div className="invoice-meta"><div><span>اسم العميل</span><b>{invoiceOrder.customer||'—'}</b></div><div><span>رقم الهاتف</span><b>{invoiceOrder.phone||'—'}</b></div><div className="invoice-address"><span>عنوان التوصيل</span><b>{invoiceOrder.address||'—'}</b></div><div><span>حالة الطلب</span><b>{invoiceOrder.status}</b></div></div><table className="invoice-items"><thead><tr><th>الصنف</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead><tbody>{invoiceOrder.lines.map((line,i)=>{const product=products.find(p=>p.id===line.productId);const unitPrice=typeof line.unitPrice==='number'?line.unitPrice:lineUnitPrice(line);const lineTotal=typeof line.lineTotal==='number'?line.lineTotal:unitPrice*line.qty;const options=(line.options||[]).flatMap(g=>g.values.map(v=>v.name));return <tr key={line.productId+'-'+i}><td><b>{line.productName||product?.name||'منتج'}</b>{options.length>0&&<small>{options.join('، ')}</small>}</td><td>{line.qty}</td><td>{money(unitPrice)}</td><td>{money(lineTotal)}</td></tr>})}{invoiceOrder.lines.length===0&&<tr><td colSpan={4}>لا توجد أصناف — {invoiceOrder.notes||invoiceOrder.kind}</td></tr>}</tbody></table><div className="invoice-totals"><div><span>المنتجات</span><b>{money(invoiceOrder.total)}</b></div><div><span>التوصيل</span><b>{money(invoiceOrder.delivery)}</b></div><div className="invoice-grand-total"><span>الإجمالي</span><b>{money(invoiceOrder.total+invoiceOrder.delivery)}</b></div></div><div className="invoice-payment"><span>طريقة الدفع</span><b>{invoiceOrder.payment||'غير محدد'}</b></div><p className="invoice-thanks">شكرًا لاستخدام سريع — ملوى</p></article></div></div>}"""
 replace_once(
-    " {toast&&<div className=\\\"toast\\\"",
-    invoice + " {toast&&<div className=\\\"toast\\\"",
+    ' {toast&&<div className="toast"',
+    invoice + ' {toast&&<div className="toast"',
     'invoice modal'
 )
 
 css_path=Path('src/style.css')
 css=css_path.read_text(encoding='utf-8')
 if '.invoice-sheet' not in css:
-    css += r\` 
+    css += r"""
 /* Merchant cashier + printable customer/merchant invoice. */
 .order-actions .invoice-cancel{border-color:#c84b43!important;color:#a52f28!important}
 .invoice-dialog{width:min(760px,100%);max-height:94dvh;overflow:auto;padding:14px}
@@ -140,14 +142,14 @@ if '.invoice-sheet' not in css:
  .invoice-sheet{position:static!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;break-inside:avoid}
  .invoice-items tr,.invoice-meta,.invoice-totals,.invoice-payment{break-inside:avoid}
 }
-\`
+"""
     css_path.write_text(css, encoding='utf-8')
 
 tests=Path('tests/source-smoke.test.cjs')
 if tests.exists():
     t=tests.read_text(encoding='utf-8')
     if 'merchant cashier uses explicit order transitions and cancellation' not in t:
-        t += \` 
+        t += r"""
 test('merchant cashier uses explicit order transitions and cancellation', () => {
   const source = app();
   assert.ok(source.includes("filter==='merchant'&&o.status==='جديد'"));
@@ -161,7 +163,7 @@ test('merchant cashier uses explicit order transitions and cancellation', () => 
 test('customer and merchant can open a snapshot-based printable invoice', () => {
   const source = app();
   const css = fs.readFileSync(path.join(root, 'src/style.css'), 'utf8');
-  assert.ok(source.includes("(filter==='customer'||filter==='merchant')&&<button className=\\\"outline small\\\" onClick={()=>openInvoice(o)}>فاتورة</button>"));
+  assert.ok(source.includes("(filter==='customer'||filter==='merchant')&&<button className=\"outline small\" onClick={()=>openInvoice(o)}>فاتورة</button>"));
   assert.ok(source.includes('productName:x.product_name'));
   assert.ok(source.includes('unitPrice:Number(x.unit_price||0)'));
   assert.ok(source.includes('رقم الفاتورة'));
@@ -171,7 +173,7 @@ test('customer and merchant can open a snapshot-based printable invoice', () => 
   assert.ok(css.includes('@media print'));
   assert.ok(css.includes('.invoice-actions,.invoice-close{display:none!important}'));
 });
-\`
+"""
     tests.write_text(t, encoding='utf-8')
 
 app.write_text(s, encoding='utf-8')
