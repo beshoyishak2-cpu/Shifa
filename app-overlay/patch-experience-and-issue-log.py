@@ -165,25 +165,35 @@ if n!=1: raise SystemExit("Could not replace home hero artwork with the approved
 # Remove the legacy cream welcome hero that otherwise renders as a second banner.
 def remove_legacy_welcome_hero(source: str) -> str:
     welcome = "أهلاً بك في سريع"
-    pos = source.find(welcome)
-    if pos < 0:
-        # The extracted source may already have had its welcome copy removed.
+    welcome_pos = source.find(welcome)
+    if welcome_pos < 0:
         return source
-    candidates = list(re.finditer(r"<(div|section)\b[^>]*className=['\"]hero(?:\s|['\"])[^>]*>", source[:pos]))
+    art_pos = source.find('className="hero-art"')
+    if art_pos < 0:
+        raise SystemExit("Found old welcome copy but no legacy hero artwork marker")
+    # Parse JSX div nesting and remove the smallest container holding both the
+    # legacy illustration and its welcome copy, never the surrounding home page.
+    stack = []
+    ranges = []
+    for match in re.finditer(r"</?div\b[^>]*>", source):
+        token = match.group(0)
+        if token.startswith("</"):
+            if stack:
+                opening = stack.pop()
+                ranges.append((opening, match.end()))
+        elif not token.endswith("/>"):
+            stack.append(match.start())
+    candidates = [
+        (a, b) for a, b in ranges
+        if a <= art_pos < b and a <= welcome_pos < b
+        and "saree-home-promo" not in source[a:b]
+    ]
     if not candidates:
-        raise SystemExit("Found the old welcome copy but could not locate its hero container")
-    opening = candidates[-1]
-    tag = opening.group(1)
-    token = re.compile(r"</?"+tag+r"\b[^>]*>")
-    depth = 0
-    for match in token.finditer(source, opening.start()):
-        if match.group(0).startswith('</'):
-            depth -= 1
-            if depth == 0:
-                return source[:opening.start()] + source[match.end():]
-        elif not match.group(0).endswith('/>'):
-            depth += 1
-    raise SystemExit("Legacy welcome hero JSX is not balanced")
+        raise SystemExit("Could not isolate the legacy cream hero card without touching the green promo")
+    opening, closing = min(candidates, key=lambda pair: pair[1] - pair[0])
+    return source[:opening] + source[closing:]
+
+s = remove_legacy_welcome_hero(s)
 
 s = remove_legacy_welcome_hero(s)
 
