@@ -160,13 +160,67 @@ hero_svg="""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 460" role="
 hero_art=re.compile(r'<div className="hero-art"[^>]*>[\s\S]*?</div>')
 s,n=hero_art.subn('<div className="hero-art"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>',s,count=1)
 if n!=1: raise SystemExit("Could not replace home hero artwork with the approved-style SVG")
+
+# Keep exactly one home promotion: the green "طلبك أقرب مما تتخيل" banner.
+# Remove the legacy cream welcome hero that otherwise renders as a second banner.
+def remove_legacy_welcome_hero(source: str) -> str:
+    welcome = "أهلاً بك في سريع"
+    pos = source.find(welcome)
+    if pos < 0:
+        # The extracted source may already have had its welcome copy removed.
+        return source
+    candidates = list(re.finditer(r'<(div|section)\\b[^>]*className=["\\']hero(?:\\s|["\\'])[^>]*>', source[:pos]))
+    if not candidates:
+        raise SystemExit("Found the old welcome copy but could not locate its hero container")
+    opening = candidates[-1]
+    tag = opening.group(1)
+    token = re.compile(r'</?'+tag+r'\\b[^>]*>')
+    depth = 0
+    for match in token.finditer(source, opening.start()):
+        if match.group(0).startswith('</'):
+            depth -= 1
+            if depth == 0:
+                return source[:opening.start()] + source[match.end():]
+        elif not match.group(0).endswith('/>'):
+            depth += 1
+    raise SystemExit("Legacy welcome hero JSX is not balanced")
+
+s = remove_legacy_welcome_hero(s)
+
+# Reuse the approved scooter/house SVG inside the green promo instead of the bag glyph.
+promo_art = re.compile(r'<div className="saree-promo-art"[^>]*>.*?</div>', re.S)
+s, promo_count = promo_art.subn(
+    '<div className="saree-promo-art" aria-hidden="true"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>',
+    s, count=1
+)
+if promo_count != 1:
+    raise SystemExit("Could not place the scooter illustration inside the single green home banner")
+
+if s.count('className="saree-home-promo"') != 1:
+    raise SystemExit("Home must contain exactly one green promotion banner")
+if 'أهلاً بك في سريع' in s:
+    raise SystemExit("Legacy cream welcome hero remains on the home screen")
 # Keep the approved hero as the first focal card; remove the older duplicate promo/repeat strips.
 
 
 # Update the source smoke assertion to follow the approved SVG asset instead of the old inline placeholder.
 test_file=Path("tests/source-smoke.test.cjs")
+
 if test_file.exists():
  t=test_file.read_text(encoding="utf-8")
+ if "exactly one green home banner" not in t:
+  t += """
+test('home shows one green promo with scooter art and repeat-order card', () => {
+  const source = fs.readFileSync(path.join(root, 'src/App.tsx'), 'utf8');
+  assert.equal((source.match(/className="saree-home-promo"/g) || []).length, 1);
+  assert.ok(source.includes('طلبك أقرب مما تتخيل'));
+  assert.ok(source.includes('src="/brand/saree-hero-illustration.svg"'));
+  assert.ok(source.includes('اطلب تاني'));
+  assert.ok(!source.includes('أهلاً بك في سريع'));
+});
+"""
+  test_file.write_text(t,encoding="utf-8")
+
  t=t.replace("""assert.ok(source.includes('className="hero-art" aria-hidden="true"><svg viewBox="0 0 160 160"'))""","""assert.ok(source.includes('src="/brand/saree-hero-illustration.svg"'))""")
  test_file.write_text(t,encoding="utf-8")
 
