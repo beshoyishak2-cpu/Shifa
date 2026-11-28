@@ -171,18 +171,19 @@ def remove_legacy_welcome_hero(source: str) -> str:
     art_pos = source.find('className="hero-art"')
     if art_pos < 0:
         raise SystemExit("Found old welcome copy but no legacy hero artwork marker")
-    # Parse JSX div nesting and remove the smallest container holding both the
-    # legacy illustration and its welcome copy, never the surrounding home page.
-    stack = []
+    # Parse JSX container nesting so the promo and old card can be distinguished
+    # even when the hero uses a section/article wrapper rather than a div.
+    stacks = {"div": [], "section": [], "article": [], "main": []}
     ranges = []
-    for match in re.finditer(r"</?div\b[^>]*>", source):
+    for match in re.finditer(r"</?(div|section|article|main)\b[^>]*>", source):
+        tag = match.group(1)
         token = match.group(0)
         if token.startswith("</"):
-            if stack:
-                opening = stack.pop()
+            if stacks[tag]:
+                opening = stacks[tag].pop()
                 ranges.append((opening, match.end()))
         elif not token.endswith("/>"):
-            stack.append(match.start())
+            stacks[tag].append(match.start())
     candidates = [
         (a, b) for a, b in ranges
         if a <= art_pos < b and a <= welcome_pos < b
