@@ -59,6 +59,18 @@ jobs:
           p.write_text(s,encoding='utf-8')
           PY
           python3 /tmp/patch-demo-mode.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/App.tsx')
+          s = p.read_text(encoding='utf-8')
+          if 'SareeInlineIcon' in s and 'function SareeInlineIcon' not in s and 'const SareeInlineIcon' not in s:
+              fallback = """function SareeInlineIcon({name,size=24}:{name:string;size?:number}){const d=name==='arrow'?'M5 12h14m-6-6 6 6-6 6':name==='bag'?'M5 8h14l-1 12H6L5 8Zm4 0V6a3 3 0 0 1 6 0v2':'M4 12h16M12 4v16';return <svg width={size} height={size} viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" strokeWidth=\"1.8\" strokeLinecap=\"round\" strokeLinejoin=\"round\" aria-hidden=\"true\"><path d={d}/></svg>}\n"""
+              anchor = "type Role = 'customer' | 'merchant' | 'driver' | 'admin';"
+              if anchor not in s:
+                  raise SystemExit('SareeInlineIcon fallback: role anchor missing')
+              s = s.replace(anchor, fallback + anchor, 1)
+              p.write_text(s, encoding='utf-8')
+          PY
       - name: Upgrade Capacitor packages to v8
         run: |
           npm pkg set "dependencies.@capacitor/core=^8.0.0"
