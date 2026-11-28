@@ -163,7 +163,8 @@ if '.invoice-sheet' not in css:
  .invoice-overlay{position:static!important;inset:auto!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;transform:none!important;background:#fff!important;place-items:initial!important}
  .invoice-overlay *{display:revert!important;position:static!important;max-width:100%!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important;transform:none!important;box-shadow:none!important}
  .invoice-head{display:flex!important;justify-content:space-between!important;align-items:flex-start!important}
- .invoice-number{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important}
+ .invoice-number{display:grid!important;grid-template-columns:minmax(72px,.85fr) minmax(0,1.5fr)!important;gap:4px 8px!important}
+ .invoice-number small{grid-column:1/-1!important}
  .invoice-number span,.invoice-number b,.invoice-number small{display:block!important}
  .invoice-meta{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
  .invoice-meta>div{display:grid!important;grid-template-columns:minmax(72px,.85fr) minmax(0,1.5fr)!important;align-items:start!important;column-gap:8px!important;row-gap:0!important}
@@ -225,6 +226,7 @@ test('customer and merchant can open a snapshot-based printable invoice', () => 
   assert.ok(css.includes('.invoice-overlay{position:static!important'));
   assert.ok(!css.includes('body *{visibility:hidden!important}'));
   assert.ok(css.includes('.invoice-meta>div{display:grid!important;grid-template-columns:minmax(72px,.85fr) minmax(0,1.5fr)!important'));
+  assert.ok(css.includes('.invoice-number{display:grid!important;grid-template-columns:minmax(72px,.85fr) minmax(0,1.5fr)!important'));
   assert.ok(css.includes('.invoice-items th,.invoice-items td{display:table-cell!important}'));
   assert.ok(css.includes('.invoice-payment{display:flex!important'));
   assert.ok(css.includes('background:#fff!important'));
