@@ -221,7 +221,7 @@ test('customer and merchant can open a snapshot-based printable invoice', () => 
   assert.ok(css.includes('max-width:186mm!important'));
   assert.ok(css.includes('table-layout:fixed!important'));
   assert.ok(css.includes('body *{display:none!important}'));
-  assert.ok(css.includes('#root *:has(.invoice-overlay){display:contents!important}'));
+  assert.ok(css.includes('#root *:has(.invoice-overlay){display:contents!important;'));
   assert.ok(css.includes('.invoice-overlay{position:static!important'));
   assert.ok(!css.includes('body *{visibility:hidden!important}'));
   assert.ok(css.includes('.invoice-meta>div{display:grid!important;grid-template-columns:minmax(72px,.85fr) minmax(0,1.5fr)!important'));
