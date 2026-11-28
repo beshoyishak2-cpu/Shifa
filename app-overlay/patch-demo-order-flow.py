@@ -68,6 +68,112 @@ replace_once(
     'demo courier task ownership filter'
 )
 
+
+# Merchant cashier: expose each permitted transition explicitly instead of auto-advancing.
+replace_once(
+    "type CartLine = {productId:string;storeId:string;qty:number;options?:CartOptionGroup[]};",
+    "type CartLine = {productId:string;storeId:string;qty:number;productName?:string;unitPrice?:number;lineTotal?:number;options?:CartOptionGroup[]};",
+    'invoice line snapshots'
+)
+replace_once(
+    " const [searchKeyboardOpen,setSearchKeyboardOpen]=useState(false);",
+    " const [searchKeyboardOpen,setSearchKeyboardOpen]=useState(false);\\n const [invoiceOrder,setInvoiceOrder]=useState<Order|null>(null);",
+    'invoice state'
+)
+replace_once(
+    "order_items(product_id,quantity,order_item_options(group_name_snapshot,option_name_snapshot,price_delta,quantity))",
+    "order_items(product_id,product_name,unit_price,line_total,quantity,order_item_options(group_name_snapshot,option_name_snapshot,price_delta,quantity))",
+    'invoice order item select'
+)
+replace_once(
+    "({productId:x.product_id,storeId:o.merchant_id,qty:x.quantity,options:",
+    "({productId:x.product_id,storeId:o.merchant_id,qty:x.quantity,productName:x.product_name,unitPrice:Number(x.unit_price||0),lineTotal:Number(x.line_total||0),options:",
+    'invoice item snapshot mapping'
+)
+replace_once(
+    "status:orderStatusFromDb(o.status),payment:'الدفع عند الاستلام'",
+    "status:orderStatusFromDb(o.status),payment:o.payment_method==='cash'?'الدفع عند الاستلام':String(o.payment_method||'غير محدد')",
+    'invoice payment mapping'
+)
+replace_once(
+    " const renderOrders=(filter:'customer'|'merchant'|'driver'|'admin')=>",
+    " const openInvoice=(o:Order)=>{setInvoiceOrder(o);setModal('invoice')};\\n const renderOrders=(filter:'customer'|'merchant'|'driver'|'admin')=>",
+    'invoice open helper'
+)
+replace_once(
+    "{(filter==='merchant'||filter==='admin')&&o.status!=='تم التسليم'&&o.status!=='ملغي'&&(filter==='admin'||o.status!=='جاهز للاستلام')&&<button className=\\\"primary small\\\" onClick={()=>void updateServerOrder(o,nextStatus(o.status))}>تحديث حالة الطلب</button>}",
+    "{filter==='merchant'&&o.status==='جديد'&&<button className=\\\"primary small\\\" onClick={()=>void updateServerOrder(o,'تم القبول')}>قبول الطلب</button>}{filter==='merchant'&&o.status==='تم القبول'&&<button className=\\\"primary small\\\" onClick={()=>void updateServerOrder(o,'قيد التجهيز')}>ابدأ التجهيز</button>}{filter==='merchant'&&o.status==='قيد التجهيز'&&<button className=\\\"primary small\\\" onClick={()=>void updateServerOrder(o,'جاهز للاستلام')}>جاهز للاستلام</button>}{filter==='merchant'&&(o.status==='جديد'||o.status==='تم القبول')&&<button className=\\\"outline small invoice-cancel\\\" onClick={()=>void updateServerOrder(o,'ملغي')}>رفض/إلغاء</button>}{filter==='admin'&&o.status!=='تم التسليم'&&o.status!=='ملغي'&&<button className=\\\"primary small\\\" onClick={()=>void updateServerOrder(o,nextStatus(o.status))}>تحديث حالة الطلب</button>}{(filter==='customer'||filter==='merchant')&&<button className=\\\"outline small\\\" onClick={()=>openInvoice(o)}>فاتورة</button>}",
+    'merchant cashier actions and invoice buttons'
+)
+invoice=\` {modal==='invoice'&&invoiceOrder&&<div className="overlay invoice-overlay" onClick={()=>setModal('')}><div className="dialog invoice-dialog" onClick={e=>e.stopPropagation()}><div className="invoice-actions"><button className="close invoice-close" onClick={()=>setModal('')}><X/></button><button className="primary" onClick={()=>window.print()}>طباعة الفاتورة</button></div><article className="invoice-sheet" dir="rtl"><div className="invoice-head"><div><h1>{invoiceOrder.storeName}</h1><p>فاتورة طلب</p></div><div className="invoice-number"><span>رقم الفاتورة</span><b>#{invoiceOrder.number}</b><small>{new Date(invoiceOrder.createdAt).toLocaleString('ar-EG')}</small></div></div><div className="invoice-meta"><div><span>اسم العميل</span><b>{invoiceOrder.customer||'—'}</b></div><div><span>رقم الهاتف</span><b>{invoiceOrder.phone||'—'}</b></div><div className="invoice-address"><span>عنوان التوصيل</span><b>{invoiceOrder.address||'—'}</b></div><div><span>حالة الطلب</span><b>{invoiceOrder.status}</b></div></div><table className="invoice-items"><thead><tr><th>الصنف</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead><tbody>{invoiceOrder.lines.map((line,i)=>{const product=products.find(p=>p.id===line.productId);const unitPrice=typeof line.unitPrice==='number'?line.unitPrice:lineUnitPrice(line);const lineTotal=typeof line.lineTotal==='number'?line.lineTotal:unitPrice*line.qty;const options=(line.options||[]).flatMap(g=>g.values.map(v=>v.name));return <tr key={line.productId+'-'+i}><td><b>{line.productName||product?.name||'منتج'}</b>{options.length>0&&<small>{options.join('، ')}</small>}</td><td>{line.qty}</td><td>{money(unitPrice)}</td><td>{money(lineTotal)}</td></tr>})}{invoiceOrder.lines.length===0&&<tr><td colSpan={4}>لا توجد أصناف — {invoiceOrder.notes||invoiceOrder.kind}</td></tr>}</tbody></table><div className="invoice-totals"><div><span>المنتجات</span><b>{money(invoiceOrder.total)}</b></div><div><span>التوصيل</span><b>{money(invoiceOrder.delivery)}</b></div><div className="invoice-grand-total"><span>الإجمالي</span><b>{money(invoiceOrder.total+invoiceOrder.delivery)}</b></div></div><div className="invoice-payment"><span>طريقة الدفع</span><b>{invoiceOrder.payment||'غير محدد'}</b></div><p className="invoice-thanks">شكرًا لاستخدام سريع — ملوى</p></article></div></div>}\\n\`;
+replace_once(
+    " {toast&&<div className=\\\"toast\\\"",
+    invoice + " {toast&&<div className=\\\"toast\\\"",
+    'invoice modal'
+)
+
+css_path=Path('src/style.css')
+css=css_path.read_text(encoding='utf-8')
+if '.invoice-sheet' not in css:
+    css += r\` 
+/* Merchant cashier + printable customer/merchant invoice. */
+.order-actions .invoice-cancel{border-color:#c84b43!important;color:#a52f28!important}
+.invoice-dialog{width:min(760px,100%);max-height:94dvh;overflow:auto;padding:14px}
+.invoice-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:0 0 12px}
+.invoice-actions .invoice-close{position:static;margin-inline-end:auto}
+.invoice-sheet{background:#fff;color:#17231d;border:1px solid #e4e9e5;border-radius:12px;padding:28px;direction:rtl}
+.invoice-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding-bottom:18px;border-bottom:2px solid #6FCB00}
+.invoice-head h1{margin:0 0 4px;font-size:24px;color:#17643d}.invoice-head p{margin:0;color:#66736a;font-size:13px}
+.invoice-number{display:grid;gap:4px;text-align:left}.invoice-number span,.invoice-meta span,.invoice-payment span{font-size:11px;color:#68766e}.invoice-number b{font-size:20px}.invoice-number small{font-size:11px;color:#68766e}
+.invoice-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:18px 0}.invoice-meta>div{display:grid;gap:4px}.invoice-meta b{font-size:13px;overflow-wrap:anywhere}.invoice-address{grid-column:1/-1}
+.invoice-items{width:100%;border-collapse:collapse;margin:6px 0 18px;font-size:12px}.invoice-items th,.invoice-items td{padding:10px 8px;border-bottom:1px solid #e6ece7;text-align:right}.invoice-items th{background:#f1f7f2;font-weight:800}.invoice-items td small{display:block;color:#718078;font-size:10px;margin-top:3px}
+.invoice-totals{width:min(320px,100%);margin-inline-start:auto;display:grid;gap:8px}.invoice-totals>div{display:flex;justify-content:space-between;gap:16px;font-size:12px}.invoice-grand-total{border-top:2px solid #17643d;padding-top:10px;font-size:16px!important;font-weight:900}.invoice-payment{display:flex;justify-content:space-between;gap:12px;margin-top:20px;padding:12px;background:#f1f7f2;border-radius:8px;font-size:12px}.invoice-thanks{text-align:center;color:#68766e;font-size:11px;margin:24px 0 0}
+@media(max-width:600px){.invoice-dialog{padding:10px}.invoice-sheet{padding:16px}.invoice-head h1{font-size:19px}.invoice-items{font-size:10px}.invoice-items th,.invoice-items td{padding:8px 4px}}
+@media print{
+ @page{size:A4;margin:12mm}
+ html,body,#root{background:#fff!important;min-height:0!important;height:auto!important}
+ body *{visibility:hidden!important}
+ .invoice-overlay{position:absolute!important;inset:0!important;display:block!important;visibility:visible!important;background:#fff!important;padding:0!important;margin:0!important;overflow:visible!important}
+ .invoice-dialog,.invoice-dialog *{visibility:visible!important}
+ .invoice-dialog{position:static!important;display:block!important;width:100%!important;max-width:none!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important}
+ .invoice-actions,.invoice-close{display:none!important}
+ .invoice-sheet{position:static!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;break-inside:avoid}
+ .invoice-items tr,.invoice-meta,.invoice-totals,.invoice-payment{break-inside:avoid}
+}
+\`
+    css_path.write_text(css, encoding='utf-8')
+
+tests=Path('tests/source-smoke.test.cjs')
+if tests.exists():
+    t=tests.read_text(encoding='utf-8')
+    if 'merchant cashier uses explicit order transitions and cancellation' not in t:
+        t += \` 
+test('merchant cashier uses explicit order transitions and cancellation', () => {
+  const source = app();
+  assert.ok(source.includes("filter==='merchant'&&o.status==='جديد'"));
+  assert.ok(source.includes("updateServerOrder(o,'تم القبول')"));
+  assert.ok(source.includes("updateServerOrder(o,'قيد التجهيز')"));
+  assert.ok(source.includes("updateServerOrder(o,'جاهز للاستلام')"));
+  assert.ok(source.includes("updateServerOrder(o,'ملغي')"));
+  assert.ok(source.includes('رفض/إلغاء'));
+});
+
+test('customer and merchant can open a snapshot-based printable invoice', () => {
+  const source = app();
+  const css = fs.readFileSync(path.join(root, 'src/style.css'), 'utf8');
+  assert.ok(source.includes("(filter==='customer'||filter==='merchant')&&<button className=\\\"outline small\\\" onClick={()=>openInvoice(o)}>فاتورة</button>"));
+  assert.ok(source.includes('productName:x.product_name'));
+  assert.ok(source.includes('unitPrice:Number(x.unit_price||0)'));
+  assert.ok(source.includes('رقم الفاتورة'));
+  assert.ok(source.includes('invoiceOrder.storeName'));
+  assert.ok(source.includes('invoiceOrder.payment'));
+  assert.ok(source.includes('window.print()'));
+  assert.ok(css.includes('@media print'));
+  assert.ok(css.includes('.invoice-actions,.invoice-close{display:none!important}'));
+});
+\`
+    tests.write_text(t, encoding='utf-8')
+
 app.write_text(s, encoding='utf-8')
 
 tests = Path('tests/source-smoke.test.cjs')
