@@ -161,11 +161,6 @@ hero_art=re.compile(r'<div className="hero-art"[^>]*>[\s\S]*?</div>')
 s,n=hero_art.subn('<div className="hero-art"><img src="/brand/saree-hero-illustration.svg" alt="" loading="eager"/></div>',s,count=1)
 if n!=1: raise SystemExit("Could not replace home hero artwork with the approved-style SVG")
 
-# Hide only the legacy cream hero card (the one containing .hero-art), not its
-# home-page parent or the green promo/repeat-order row.
-if ".hero:has(.hero-art)" not in css:
-    css += "\n/* Legacy cream welcome hero is superseded by the single green promo banner. */\n.hero:has(.hero-art){display:none!important}\n"
-
 # Normalize the home promotion to one green banner with the approved scooter SVG.
 promo_markup = r"""<div className="saree-home-promo">
  <div className="saree-promo-copy"><span className="saree-promo-eyebrow">سريع · ملوى</span><b>طلبك أقرب مما تتخيل</b><small>مطاعم ومتاجر وخدمات يومية في مكان واحد</small><button onClick={()=>setTab('search')}>اكتشف المتاجر <span className="saree-inline-arrow"><SareeInlineIcon name="arrow" size={15}/></span></button></div>
@@ -198,6 +193,14 @@ if s.count('className="saree-home-promo"') != 1:
 if s.count("اطلب تاني") != 1:
     raise SystemExit("Home must contain exactly one repeat-order shortcut")
 
+# Remove the obsolete cream welcome card from JSX entirely; the green promo is
+# now the only home hero. Its section contains divs but no nested section.
+s, removed_legacy_hero = re.subn(r'<section className="hero">[\s\S]*?</section>', '', s, count=1)
+if removed_legacy_hero != 1:
+    raise SystemExit("Could not remove the legacy cream welcome hero section")
+if 'className="hero"' in s or "أهلاً بك في سريع" in s:
+    raise SystemExit("Legacy cream welcome hero markup remains")
+
 if s.count('className="saree-home-promo"') != 1:
     raise SystemExit("Home must contain exactly one green promotion banner")
 # Keep the approved hero as the first focal card; remove the older duplicate promo/repeat strips.
@@ -216,8 +219,8 @@ test('home shows one green promo with scooter art and repeat-order card', () => 
   assert.ok(source.includes('طلبك أقرب مما تتخيل'));
   assert.ok(source.includes('src="/brand/saree-hero-illustration.svg"'));
   assert.ok(source.includes('اطلب تاني'));
-  const css = fs.readFileSync(path.join(root, 'src/style.css'), 'utf8');
-  assert.ok(css.includes('.hero:has(.hero-art){display:none!important}'));
+  assert.ok(!source.includes('className="hero"'));
+  assert.ok(!source.includes('أهلاً بك في سريع'));
 });
 """
   test_file.write_text(t,encoding="utf-8")
