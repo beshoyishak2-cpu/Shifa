@@ -66,7 +66,7 @@ if tests.exists():
   assert.ok(app.includes('setMerchantStoreRows(SAREE_DEMO_MERCHANT_ROWS)'));
   assert.ok(app.includes("merchantIds.includes(o.storeId||'')"));
   assert.ok(app.includes("!(backendReady?address.street.trim():String(address.area||'').trim())"));
-  assert.ok(app.includes("join('، ')||'وسط ملوى، المنيا'"));
+  assert.ok(app.includes("address.area==='وسط ملوى'"));
 });
 
 test('service category icons are distinct line icons', () => {
