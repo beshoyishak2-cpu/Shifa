@@ -156,12 +156,15 @@ if '.invoice-sheet' not in css:
 @media print{
  @page{size:A4;margin:12mm}
  html,body,#root{width:100%!important;min-width:0!important;max-width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
- body *{visibility:hidden!important}
- .invoice-overlay,.invoice-overlay *{visibility:visible!important}
- .invoice-overlay{position:static!important;inset:auto!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;min-height:0!important;margin:0 auto!important;padding:0!important;overflow:visible!important;background:#fff!important;place-items:initial!important}
- .invoice-dialog{position:static!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0 auto!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;color:#17231d!important}
+ /* Remove the app shell from print layout, but preserve the ancestor chain containing the invoice. */
+ body *{display:none!important}
+ #root{display:block!important;position:static!important;width:100%!important;height:auto!important;overflow:visible!important}
+ #root *:has(.invoice-overlay){display:contents!important;position:static!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important;transform:none!important}
+ .invoice-overlay{position:static!important;inset:auto!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;transform:none!important;background:#fff!important;place-items:initial!important}
+ .invoice-overlay *{display:revert!important;position:static!important;max-width:100%!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important;transform:none!important;box-shadow:none!important}
+ .invoice-dialog{position:static!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;color:#17231d!important}
  .invoice-actions,.invoice-close{display:none!important}
- .invoice-sheet{position:static!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0 auto!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;color:#17231d!important;break-inside:auto!important}
+ .invoice-sheet{position:static!important;display:block!important;width:100%!important;max-width:186mm!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;color:#17231d!important;break-inside:auto!important}
  .invoice-sheet *{max-width:100%!important;min-width:0!important;overflow-wrap:anywhere!important;word-break:break-word!important}
  .invoice-head,.invoice-meta,.invoice-totals,.invoice-payment{min-width:0!important;max-width:100%!important}
  .invoice-items{width:100%!important;max-width:100%!important;min-width:0!important;table-layout:fixed!important;border-collapse:collapse!important}
@@ -205,6 +208,10 @@ test('customer and merchant can open a snapshot-based printable invoice', () => 
   assert.ok(css.includes('.invoice-overlay,.invoice-overlay *{visibility:visible!important}'));
   assert.ok(css.includes('background:#fff!important'));
   assert.ok(css.includes('overflow-wrap:anywhere!important'));
+  assert.ok(css.includes('body *{display:none!important}'));
+  assert.ok(css.includes('#root *:has(.invoice-overlay){display:contents!important}'));
+  assert.ok(css.includes('.invoice-overlay{position:static!important'));
+  assert.ok(!css.includes('body *{visibility:hidden!important}'));
 });
 """
     tests.write_text(t, encoding='utf-8')
